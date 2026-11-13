@@ -190,3 +190,40 @@ Done when `npm run check` and e2e pass. Logical commits (fixtures, schemas, adap
 ```
 
 **Outcome:** The three review changes landed as separate commits. A deep navy night needs light text, so the agent made night cards render in the dark scope on either theme instead of adding a second set of text colours. The data layer followed with 365 passing unit tests, built on fixtures recorded for Karachi, Tokyo and Honolulu at one instant that falls on two different local dates. The copy test did its job on the first run: it rejected five "service is down" messages that named the failure but gave the user nothing to do.
+
+## Prompt 8 — Review changes, then city search
+
+```text
+Review decisions:
+- Night card as a dark island: accepted.
+- Taxonomy additions, 404 fallback, retry policy, unixtime: accepted.
+- Daily condition: change it. "Cloudy" with a 100% rain chance is wrong from a user's point of view. Pick the most significant condition among the day's daytime slots (06:00–18:00 local) by a severity ranking: thunderstorm > snow > freezing-rain > rain > drizzle > fog > cloudy > partly-cloudy > clear. Precipitation only wins if it's meaningful (the slot reports precipitation or its chance is 50% or more); otherwise use the noon-nearest slot as now. Tokyo 15 Nov from the fixture should come out as rain. Apply the same idea to today's partial day.
+- 401: open the circuit for it too, for the session, and keep the developer console warning.
+Commit these as their own commits.
+
+Then build city search (requirements 01 and 03).
+
+Data:
+- Drop types=CITY. Keep sort=-population, limit 10, and add languageCode=en. Clean results client-side: drop entries whose name is the same place as a higher-ranked result (same name and region, or within ~25 km), and prefer a city over a "Greater X" administrative area when both are present. Verify against the recorded Laho/London fixtures: Lahore must appear, the duplicate Londrina and Greater London must not crowd out London. Show at most 6.
+- Request policy from the plan: min 2 characters, 150 ms debounce, abort stale requests, prefix cache with local filtering for longer prefixes, 1 request per second spacing with the latest query winning, and the Open-Meteo geocoding fallback on 429 / 5xx / timeout only (not on empty results).
+
+Combobox (WAI-ARIA combobox pattern): arrow keys, Enter, Escape, Home/End, aria-activedescendant, result counts announced through the live region. Each option shows city, region and country with the country flag as an emoji or code, so same-name cities are distinguishable. Highlight the matched prefix.
+
+States, all visible in the field area: idle, typing, searching (indicator shown after 150 ms only, to avoid flicker), rests, no results ("No cities match 'xyz'. Check the spelling or try a nearby larger city."), rate-limited, offline (input disabled with the reason), and service error. Every message says what failed and what to do. When the fallback geocoder served the results, say so quietly.
+
+Validation, on blur and on submit:
+- empty -> "Enter a city name"; 1 character -> "Type at least 2 letters".
+- No error on first focus or when tabbing past an untouched field (plan R8). Blur is ignored while a suggestion is being clicked.
+- Submitting typed text without choosing selects the top match if there is one, otherwise shows the no-results message.
+- Errors inline under the field, linked with aria-describedby, cleared as soon as the input becomes valid.
+
+Selecting a city updates ?city= in the URL, becomes the last viewed city, and makes the empty-state chips work (they run a search). Rendering weather comes in the next task.
+
+Measure the 300 ms budget with the dev-only performance mark: record cached and network timings in the plan for the README.
+
+Tests: cleaning against the real fixtures, debounce and spacing timing with fake timers, stale-response cancellation, cache and local filtering, fallback triggers, every keyboard path, every validation message on blur and submit, no-results, offline and rate-limited states. Add an e2e flow at 375 and 1280: type, arrow down, Enter, URL updated.
+
+Done when `npm run check` and e2e pass. Logical commits, log this prompt, push, confirm CI and deploy are green.
+```
+
+**Outcome:** Both review changes landed first. City search followed: cleaning rules verified on recorded responses (Lahore now appears, London leads), a request engine with cache, local filtering, one-per-second spacing and a backup geocoder, and an ARIA combobox with every state and validation rule. Measured against the live API, a first network answer takes 673 to 981 ms, so the 300 ms budget is met only for cached answers; the agent then removed the pause for those, taking them from about 175 ms to under 30 ms. It also pushed back on one rule: merging results by distance alone would merge neighbouring cities, so names must be related too.
