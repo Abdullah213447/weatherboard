@@ -4,15 +4,17 @@ import { DashboardGrid } from '@/app/DashboardGrid';
 import { Panel } from '@/app/Panel';
 import { useRecentCities } from '@/features/city/recentCities';
 import { selectCity, useSelectedCity } from '@/features/city/selectedCity';
-import { ThemeControl } from '@/features/prefs/ThemeControl';
+import { SettingsMenu } from '@/features/prefs/SettingsMenu';
 import { CitySearch, type CitySearchHandle, type KnownCity } from '@/features/search/CitySearch';
 import { FirstRunEmptyState } from '@/features/weather/FirstRunEmptyState';
-import { cityContext } from '@/domain/cities';
+import { useWeatherView } from '@/features/weather/useWeatherView';
 import { safeStorage } from '@/lib/safeStorage';
 import { InlineAlert } from '@/ui/InlineAlert';
+import { LiveRegion } from '@/ui/LiveRegion';
 
 export function App() {
   const city = useSelectedCity();
+  const weather = useWeatherView(city);
   const searchRef = useRef<CitySearchHandle>(null);
   const recent = useRecentCities();
   // Favourites join this list when that feature lands.
@@ -24,32 +26,27 @@ export function App() {
   return (
     <AppShell
       search={<CitySearch ref={searchRef} onSelect={selectCity} known={known} />}
-      themeControl={<ThemeControl />}
+      status={weather.status}
+      settings={<SettingsMenu />}
       banner={
         !safeStorage.isPersistent && (
           <InlineAlert tone="info" title="Your choices will not be saved in this browser">
             Storage is blocked, often by private browsing or a privacy setting. Everything works,
-            but your theme and favourites reset when you close this tab.
+            but your settings and favourites reset when you close this tab.
           </InlineAlert>
         )
       }
     >
       <DashboardGrid
-        primary={{
-          empty: (
-            <Panel className="h-full">
-              {city ? (
-                // Stands in for the conditions card and forecast, which are the next step.
-                <div className="flex flex-col gap-1 py-6 md:py-10">
-                  <h2 className="text-xl font-semibold">{city.name}</h2>
-                  <p className="text-muted text-sm">{cityContext(city)}</p>
-                </div>
-              ) : (
+        primary={
+          weather.primary ?? {
+            empty: (
+              <Panel className="h-full">
                 <FirstRunEmptyState onSelect={(name) => searchRef.current?.searchFor(name)} />
-              )}
-            </Panel>
-          ),
-        }}
+              </Panel>
+            ),
+          }
+        }
         secondary={
           <>
             <Panel title="Favourites">
@@ -65,6 +62,7 @@ export function App() {
           </>
         }
       />
+      <LiveRegion message={weather.announcement} />
     </AppShell>
   );
 }

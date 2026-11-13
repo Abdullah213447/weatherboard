@@ -15,6 +15,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Tests must behave the same on every machine: never read real keys from .env.local.
+    env: { VITE_OPENWEATHER_API_KEY: '', VITE_RAPIDAPI_KEY: '' },
     include: ['src/**/*.test.{ts,tsx}'],
     // The token contrast test reads tokens.css as text; without this Vitest stubs every CSS import.
     css: { include: /tokens\.css/ },

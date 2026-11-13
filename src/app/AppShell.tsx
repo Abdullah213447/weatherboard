@@ -5,7 +5,8 @@ type AppShellProps = {
   search: ReactNode;
   /** Small indicators such as data freshness or connection state. */
   status?: ReactNode;
-  themeControl: ReactNode;
+  /** The settings button. */
+  settings: ReactNode;
   /** Page-level notices: offline mode, storage unavailable. */
   banner?: ReactNode;
   children: ReactNode;
@@ -17,7 +18,7 @@ const linkClass =
   'text-muted hover:text-ink underline underline-offset-2 inline-flex min-h-11 items-center compact:inline compact:min-h-0';
 
 /** Page frame: header with slots, a banner row, the main area and the attribution footer. */
-export function AppShell({ search, status, themeControl, banner, children }: AppShellProps) {
+export function AppShell({ search, status, settings, banner, children }: AppShellProps) {
   return (
     <div className="bg-canvas text-ink flex min-h-dvh flex-col">
       <a
@@ -29,7 +30,7 @@ export function AppShell({ search, status, themeControl, banner, children }: App
 
       <header className="border-line bg-surface border-b">
         <div
-          className={`${container} grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 py-3 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-x-6`}
+          className={`${container} grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 py-3 md:grid-cols-[auto_minmax(0,1fr)_auto_auto] md:gap-x-6`}
         >
           <h1 className="col-start-1 row-start-1 flex items-center gap-2 text-base font-semibold tracking-tight">
             <span aria-hidden="true" className="bg-ink size-2.5 rounded-full" />
@@ -38,10 +39,13 @@ export function AppShell({ search, status, themeControl, banner, children }: App
           <div className="col-span-2 row-start-2 md:col-span-1 md:col-start-2 md:row-start-1 md:max-w-md">
             {search}
           </div>
-          <div className="col-start-2 row-start-1 flex items-center gap-3 justify-self-end md:col-start-3">
-            {status}
-            {themeControl}
-          </div>
+          {/* Its own row on a phone, where the header has no room beside the wordmark. */}
+          {status !== undefined && status !== null && status !== false && (
+            <div className="col-span-2 row-start-3 min-w-0 md:col-span-1 md:col-start-3 md:row-start-1">
+              {status}
+            </div>
+          )}
+          <div className="col-start-2 row-start-1 justify-self-end md:col-start-4">{settings}</div>
         </div>
       </header>
 
