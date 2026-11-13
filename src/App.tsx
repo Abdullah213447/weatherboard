@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AppShell } from '@/app/AppShell';
 import { DashboardGrid } from '@/app/DashboardGrid';
 import { Panel } from '@/app/Panel';
@@ -8,7 +8,10 @@ import { useFavourites } from '@/features/favourites/favouritesStore';
 import { selectCity, useSelectedCity } from '@/features/city/selectedCity';
 import { ThemeMenu } from '@/features/prefs/ThemeMenu';
 import { InstallPrompt } from '@/features/pwa/InstallPrompt';
+import { install } from '@/features/pwa/installStore';
+import { noticeToShow } from '@/features/pwa/noticeOrder';
 import { OfflineReadyToast, UpdateNotice } from '@/features/pwa/PwaNotices';
+import { pwa } from '@/features/pwa/pwaStore';
 import { CitySearch, type CitySearchHandle, type KnownCity } from '@/features/search/CitySearch';
 import { FirstRunEmptyState } from '@/features/weather/FirstRunEmptyState';
 import { useWeatherView } from '@/features/weather/useWeatherView';
@@ -23,6 +26,18 @@ export function App() {
   const city = useSelectedCity();
   const weather = useWeatherView(city, { onOpenCity: selectCity });
   const online = useOnline();
+
+  // The app's own notices are shown one at a time, most important first.
+  const pwaState = useSyncExternalStore(pwa.subscribe, pwa.getState);
+  const installState = useSyncExternalStore(install.subscribe, install.getState);
+  // Stays true once any city has been shown, so the install card does not come and go.
+  const [cityLoaded, setCityLoaded] = useState(false);
+  if (weather.hasWeather && !cityLoaded) setCityLoaded(true);
+  const notice = noticeToShow({
+    ...pwaState,
+    installable: installState.kind !== 'hidden',
+    cityLoaded,
+  });
   const searchRef = useRef<CitySearchHandle>(null);
   const recent = useRecentCities();
   const favourites = useFavourites();
@@ -71,7 +86,7 @@ export function App() {
               you close this tab.
             </InlineAlert>
           )}
-          <UpdateNotice />
+          {notice === 'update' && <UpdateNotice />}
         </>
       }
     >
@@ -97,8 +112,8 @@ export function App() {
           </>
         }
       />
-      <InstallPrompt />
-      <OfflineReadyToast />
+      {notice === 'install' && <InstallPrompt />}
+      {notice === 'offline-ready' && <OfflineReadyToast />}
       <LiveRegion message={weather.announcement} />
       <Announcer />
     </AppShell>

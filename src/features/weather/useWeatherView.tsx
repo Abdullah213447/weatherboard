@@ -36,6 +36,8 @@ export type WeatherView = {
   announcement: string;
   /** Set while offline: the sentence that follows "Offline mode." in the banner. */
   offlineMessage: string | null;
+  /** True once a city's weather, live or saved, is on screen. */
+  hasWeather: boolean;
   /** The manual refresh, or null when there is nothing to refresh. */
   refresh: { onClick: () => void; disabled: boolean } | null;
 };
@@ -129,7 +131,14 @@ export function useWeatherView(city: City | null, { deps, onOpenCity }: Options 
       : 'Search and new weather need a connection.';
 
   if (!city || state.status === 'idle') {
-    return { primary: null, status: null, announcement: '', offlineMessage, refresh: null };
+    return {
+      primary: null,
+      status: null,
+      announcement: '',
+      offlineMessage,
+      hasWeather: false,
+      refresh: null,
+    };
   }
 
   const status = <WeatherStatus state={state} now={now} offline={offline} />;
@@ -139,7 +148,7 @@ export function useWeatherView(city: City | null, { deps, onOpenCity }: Options 
       : state.status === 'error'
         ? { onClick: state.retry, disabled: offline && !canTryAnyway }
         : { onClick: () => undefined, disabled: true };
-  const base = { status, offlineMessage, refresh };
+  const base = { status, offlineMessage, refresh, hasWeather: shown !== null };
 
   const heading = (
     <>
