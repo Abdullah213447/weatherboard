@@ -122,22 +122,33 @@ test('nothing shifts when the weather replaces its skeleton', async ({ page }) =
   expect(cls).toBeLessThan(0.01);
 });
 
-test('when both sources are unreachable it says so, and a retry recovers', async ({ page }) => {
+test('when neither source can be reached, the app treats it as offline and a manual refresh recovers', async ({
+  page,
+}) => {
   await page.route('https://api.openweathermap.org/**', (route) => route.abort());
   await page.route('https://api.open-meteo.com/**', (route) => route.abort());
   await page.goto(KARACHI);
 
-  const alert = page.getByRole('alert');
-  await expect(alert).toContainText('Could not reach the weather', { timeout: 10_000 });
+  // The browser still claims a connection, but nothing answers: that is offline in practice.
+  await expect(page.getByRole('status').filter({ hasText: 'Offline mode' })).toBeVisible({
+    timeout: 10_000,
+  });
   await expect(page.getByRole('heading', { name: 'Karachi' })).toBeVisible();
+  await expect(page.getByText(/Nothing has been saved for offline use yet/)).toBeVisible();
+  await expect(page.getByText(/the weather services could not be reached/)).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
 
+  // Because the browser reports a connection, trying again by hand stays possible.
+  const refresh = page.getByRole('button', { name: 'Refresh weather' });
+  await expect(refresh).toBeEnabled();
   await page.unroute('https://api.openweathermap.org/**');
   await interceptWeather(page);
-  await alert.getByRole('button', { name: 'Try again' }).click();
+  await refresh.click();
 
   await expect(
     page.getByTestId('current-conditions').getByText('26°', { exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Offline mode' })).toHaveCount(0);
 });
 
 test.describe('in a US-locale browser', () => {
