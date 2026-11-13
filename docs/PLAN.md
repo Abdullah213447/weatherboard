@@ -161,7 +161,9 @@ SI units everywhere in the model; display units are a view concern. Components n
 ### GeoDB Cities via RapidAPI (autocomplete)
 
 - `GET wft-geo-db.p.rapidapi.com/v1/geo/cities?namePrefix&limit=6&sort=-population&types=CITY` with `X-RapidAPI-Key` and `X-RapidAPI-Host`.
-- Free plan: 1,000 requests/day as a hard limit and at most 10 results per call (confirmed on the RapidAPI listing). The 1 request/second rate is reported by third parties only; it gets confirmed from the rate-limit response headers once the key exists. This is the tightest limit in the app.
+- Free plan, confirmed live on 14 Nov: 1,000 requests/day (`x-ratelimit-requests-limit`, rolling 24 h reset) and 1 request/second. The per-second rate is not published in any header; it was observed directly, with two of three simultaneous requests answered 429 naming the per-second limit. Rejected requests do not count against the daily quota. At most 10 results per call. This is the tightest limit in the app.
+- Measured response time from Pakistan: about 600 ms per call, so a network result cannot land inside 300 ms on its own.
+- Data quirk found while recording fixtures: with `types=CITY`, Lahore is missing entirely, because GeoDB holds it as an `ADM2` record (Karachi and London are `CITY`). Results also contain near-duplicates. The filter in the endpoint above therefore cannot stay as written; the handling is settled in the search task.
 - Request policy: minimum 2 characters; 150 ms debounce; abort the in-flight request on new input; cache results per normalized prefix for the session; when a cached prefix returned fewer than `limit` rows, filter locally for longer prefixes instead of calling again; hold a 1 s spacing between network calls with the latest query winning.
 - Failures: 429 (very likely during fast typing), 401/403 (key or subscription), timeout, empty `data`.
 - On 429, 5xx or timeout, fall back to Open-Meteo Geocoding (`geocoding-api.open-meteo.com/v1/search?name&count=6`) mapped to the same `City` type. An empty result is a no-results state, not a fallback trigger.
@@ -202,7 +204,7 @@ The policy is a pure function of (outcome, circuit state), so it is tested as a 
 
 **R4. API keys ship in the bundle.** Client-only means the OWM and RapidAPI keys are readable by anyone. Neither provider supports referrer restriction. Mitigation: free-tier keys only, read from `.env.local`, never committed, rotated after the review, limitation documented. A proxy is listed as a next step in the README.
 
-**R5. Key activation.** New OpenWeatherMap keys can take a while to activate. The project key is already live (checked 14 Nov). The RapidAPI key still needs its GeoDB Cities subscription; until then the Open-Meteo geocoding fallback keeps search working.
+**R5. Key activation.** New OpenWeatherMap keys can take a while to activate. The project key is already live (checked 14 Nov). The GeoDB subscription is active as well (200 on 14 Nov).
 
 **R6. Where the offline weather lives.** The brief places the last city's weather in the service worker's cache. Plan: the SW precaches the shell; the app writes the normalized snapshot to Cache Storage after each successful fetch. Caching raw provider responses in the SW instead would key entries by URLs containing the API key and could serve an older OWM response over a newer Open-Meteo one. Same storage, same DevTools evidence, one source of truth.
 
@@ -233,5 +235,6 @@ The policy is a pure function of (outcome, circuit state), so it is tested as a 
 | 11  | All three bonuses are in scope; icon animation is subtle and off under reduced motion                                                                                              | Units and theme are nearly free with this design, and the icon set is ours anyway                    |
 | 12  | Cut order in R10 stands                                                                                                                                                            | Protects error states, offline and responsive behaviour if time runs short                           |
 | 13  | ESLint pinned to v9                                                                                                                                                                | The accessibility lint plugin does not support v10 yet                                               |
+| 14  | GeoDB limits treated as 1 request/second and 1,000/day                                                                                                                             | Both confirmed against the live API, the first by observation and the second from response headers   |
 
-Still open: the RapidAPI key exists but is not yet subscribed to GeoDB Cities (repeated live calls with the correct host returned 403 on 14 Nov, which points to a key from a different RapidAPI app than the subscribed one), so the per-second rate is still unconfirmed; and the Upstash account plus VAPID keys are needed before the reminder sender can be deployed.
+Still open: how search treats GeoDB's `ADM2` records and duplicates (see §4); the Vercel to GitHub connection, which Vercel still refuses, so production is deployed from the CLI for now; and the Upstash account plus VAPID keys needed before the reminder sender can be deployed.
