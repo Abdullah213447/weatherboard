@@ -237,6 +237,72 @@ describe('quick-access panel', () => {
   });
 });
 
+describe('on a phone', () => {
+  beforeEach(() => {
+    // Narrower than 768px: the panel renders its compact form.
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: () => ({
+        matches: false,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }),
+    });
+  });
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'matchMedia');
+  });
+
+  it('shows each saved city as a tap target with its temperature, and no remove buttons', async () => {
+    renderPanel(storeWith([karachi, lahore, longName]), { current: lahore });
+
+    expect(panel().getAllByRole('listitem')).toHaveLength(3);
+    await waitFor(() => {
+      expect(row('Lahore')).toHaveTextContent('26 degrees Celsius, Fog');
+    });
+    expect(row('Lahore')).toHaveAttribute('aria-current', 'true');
+    expect(row('Karachi')).not.toHaveAttribute('aria-current');
+    expect(panel().getByText('Thiruvananthapuram')).toHaveAttribute('title', 'Thiruvananthapuram');
+    expect(panel().queryByRole('button', { name: /^Remove / })).not.toBeInTheDocument();
+    expect(panel().getByText('3 of 5 saved')).toBeInTheDocument();
+  });
+
+  it('switches city in one tap', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    renderPanel(storeWith([karachi, lahore]), { onSelect });
+
+    await user.click(row('Lahore'));
+
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(lahore);
+  });
+
+  it('Edit swaps in the full list with remove buttons, and Done puts the tap targets back', async () => {
+    const user = userEvent.setup();
+    renderPanel(storeWith([karachi, lahore]));
+    const edit = panel().getByRole('button', { name: 'Edit' });
+    expect(edit).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(edit);
+
+    expect(panel().getByRole('button', { name: 'Done' })).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      panel().getByRole('button', { name: 'Remove Lahore from favourites' }),
+    ).toBeInTheDocument();
+    expect(row('Lahore')).toHaveTextContent('Punjab, Pakistan');
+
+    await user.click(panel().getByRole('button', { name: 'Done' }));
+
+    expect(panel().queryByRole('button', { name: /^Remove / })).not.toBeInTheDocument();
+  });
+
+  it('has no Edit button when nothing is saved', () => {
+    renderPanel(storeWith([]));
+
+    expect(panel().queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+  });
+});
+
 describe('removing from the panel', () => {
   const openRemove = async (user: ReturnType<typeof userEvent.setup>, name: string) => {
     await user.click(panel().getByRole('button', { name: `Remove ${name} from favourites` }));

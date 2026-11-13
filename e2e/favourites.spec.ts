@@ -105,9 +105,9 @@ test('save from the card, find it in the panel, keep it across a reload, remove 
   await page.goto(KARACHI);
   const panel = page.getByTestId('favourites');
   const star = page.getByRole('button', { name: 'Save Karachi as a favourite' });
-  /** On a phone the list is folded behind its heading. */
+  /** On a phone the full list, with its remove buttons, is behind Edit. */
   const openList = async () => {
-    if (isPhone(testInfo.project.name)) await panel.getByRole('button', { name: 'Show' }).click();
+    if (isPhone(testInfo.project.name)) await panel.getByRole('button', { name: 'Edit' }).click();
   };
 
   await expect(panel).toContainText('Tap the star on a city');
@@ -115,11 +115,12 @@ test('save from the card, find it in the panel, keep it across a reload, remove 
   await expect(star).toHaveAttribute('aria-pressed', 'true');
   await expect(panel).toContainText('1 of 5');
 
-  await openList();
+  // Visible at once on every width: as a tap target on a phone, as a list row otherwise.
   const row = panel.getByRole('button', { name: /^Karachi/ });
-  await expect(row).toContainText('Sindh, Pakistan');
   await expect(row).toContainText('26°');
   await expect(row).toHaveAttribute('aria-current', 'true');
+  await openList();
+  await expect(panel.getByRole('button', { name: /^Karachi/ })).toContainText('Sindh, Pakistan');
 
   await page.reload();
   await expect(panel).toContainText('1 of 5');
@@ -178,7 +179,13 @@ test('five long-named favourites never cause sideways scrolling', async ({ page 
 
   expect(await overflow()).toBeLessThanOrEqual(0);
 
-  if (isPhone(testInfo.project.name)) await panel.getByRole('button', { name: 'Show' }).click();
+  await expect(panel.getByRole('listitem')).toHaveCount(5);
+  if (isPhone(testInfo.project.name)) {
+    // Folded: two to a row, so five cities take three rows, not five.
+    const folded = await panel.boundingBox();
+    expect(folded?.height).toBeLessThanOrEqual(215);
+    await panel.getByRole('button', { name: 'Edit' }).click();
+  }
   await expect(panel.getByRole('listitem')).toHaveCount(5);
   await expect(panel.getByRole('listitem').first()).toContainText('26°');
   expect(await overflow()).toBeLessThanOrEqual(0);
@@ -212,17 +219,12 @@ test('on a 375x667 phone with five favourites, the current temperature is on the
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
   expect((box?.y ?? Infinity) + (box?.height ?? 0)).toBeLessThanOrEqual(667);
 
-  // And the favourites are reachable from the top: one tap to open, one to choose.
-  const show = page.getByTestId('favourites').getByRole('button', { name: 'Show' });
-  await expect(show).toBeInViewport();
+  // And switching city is one tap, from the top of the page.
+  const chip = page.getByTestId('favourites').getByRole('button', { name: /^Thiruvananthapuram/ });
+  await expect(chip).toBeInViewport();
   await page.screenshot({ path: 'test-results/screens/favourites-375x667.png' });
 
-  await show.click();
-  await page
-    .getByTestId('favourites')
-    .getByRole('button', { name: /^Thiruvananthapuram/ })
-    .click();
+  await chip.click();
   await expect(page).toHaveURL(/city=Thiruvananthapuram~Kerala~IN~/);
-  // Choosing folds the list away again, so the weather is in view.
-  await expect(page.getByTestId('favourites').getByRole('button', { name: 'Show' })).toBeVisible();
+  await expect(chip).toHaveAttribute('aria-current', 'true');
 });
