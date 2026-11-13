@@ -166,6 +166,30 @@ describe('success', () => {
   });
 });
 
+describe('clock', () => {
+  it('moves the city\u2019s local time and the freshness line forward as time passes', async () => {
+    vi.useFakeTimers({ now: RECORDED_AT });
+    renderWithProviders(<View city={karachi} client={resolved(karachiSnapshot)} />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(within(card()).getByText(/1:38/)).toBeInTheDocument();
+    expect(screen.getByTestId('weather-status')).toHaveTextContent('Updated just now');
+
+    // Recorded at 01:38:33; the clock ticks every 15 seconds.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(within(card()).getByText(/1:39/)).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4 * 60_000);
+    });
+    expect(within(card()).getByText(/1:43/)).toBeInTheDocument();
+    expect(screen.getByTestId('weather-status')).toHaveTextContent('Updated 4 min ago');
+  });
+});
+
 describe('units', () => {
   it('converts what is on screen without asking for the weather again', async () => {
     const client = resolved(karachiSnapshot);

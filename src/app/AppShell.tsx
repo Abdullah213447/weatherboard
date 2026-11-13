@@ -5,7 +5,7 @@ type AppShellProps = {
   search: ReactNode;
   /** Small indicators such as data freshness or connection state. */
   status?: ReactNode;
-  /** The settings button. */
+  /** The theme button. */
   settings: ReactNode;
   /** Page-level notices: offline mode, storage unavailable. */
   banner?: ReactNode;

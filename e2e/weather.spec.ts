@@ -52,6 +52,14 @@ test('a selected city shows current conditions and a five-day forecast', async (
   await expect(page.getByTestId('weather-status')).toContainText('OpenWeatherMap');
   await expect(page).toHaveTitle('Karachi 26° · WeatherBoard');
 
+  // The unit control is in view next to the temperature, with full-size targets on a phone.
+  const unit = card.locator('label[title="Celsius"]');
+  await expect(unit).toBeVisible();
+  const unitBox = await unit.boundingBox();
+  const minimum = ['mobile', 'mobile-fine'].includes(testInfo.project.name) ? 44 : 36;
+  expect(unitBox?.width).toBeGreaterThanOrEqual(minimum);
+  expect(unitBox?.height).toBeGreaterThanOrEqual(minimum);
+
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
@@ -72,8 +80,8 @@ test('switching units converts the display without another request, and is remem
   await expect(card.getByText('26°', { exact: true })).toBeVisible();
   expect(weather.requests).toBe(2);
 
-  await page.getByRole('button', { name: 'Settings' }).click();
-  await page.locator('label[title="Fahrenheit"]').click();
+  // The unit control sits on the card, beside the number it describes.
+  await card.locator('label[title="Fahrenheit"]').click();
 
   await expect(card.getByText('79°', { exact: true })).toBeVisible();
   await expect(card.getByText(/3 mph/)).toBeVisible();
@@ -105,6 +113,9 @@ test('nothing shifts when the weather replaces its skeleton', async ({ page }) =
   await expect(card).toHaveAttribute('aria-busy', 'true');
   await expect(card.getByText('26°', { exact: true })).toBeVisible();
   await page.waitForTimeout(400);
+
+  // Arrived in place: the tint is applied to the same card element that held the skeleton.
+  await expect(card).toHaveAttribute('data-theme', 'dark');
 
   const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
   // "Good" is under 0.1 by Core Web Vitals; this holds the app to a tenth of that.

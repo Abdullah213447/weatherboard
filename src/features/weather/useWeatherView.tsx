@@ -8,8 +8,8 @@ import type { City } from '@/domain/weather';
 import { useUnits } from '@/features/prefs/units';
 import { useNow } from '@/lib/useNow';
 import { InlineAlert } from '@/ui/InlineAlert';
-import { CurrentConditions, CurrentConditionsSkeleton } from './CurrentConditions';
-import { Forecast, ForecastSkeleton } from './Forecast';
+import { CurrentConditions } from './CurrentConditions';
+import { Forecast } from './Forecast';
 import { useWeather } from './useWeather';
 import { WeatherStatus } from './WeatherStatus';
 
@@ -60,17 +60,6 @@ export function useWeatherView(
 
   const status = <WeatherStatus state={state} now={now} />;
 
-  if (state.status === 'loading') {
-    return {
-      primary: {
-        current: <CurrentConditionsSkeleton city={city} />,
-        forecast: <ForecastSkeleton />,
-      },
-      status,
-      announcement: '',
-    };
-  }
-
   if (state.status === 'error' && !state.saved) {
     const copy = errorCopy(state.error);
     return {
@@ -96,12 +85,14 @@ export function useWeatherView(
     };
   }
 
-  if (!shown) return { primary: null, status, announcement: '' };
-
+  // Loading and loaded render the same two components in the same places, so
+  // the skeleton becomes the card in place rather than being swapped for it.
   const cards = {
     forecast: <Forecast snapshot={shown} units={units} now={now} />,
-    current: <CurrentConditions snapshot={shown} units={units} now={now} />,
+    current: <CurrentConditions city={city} snapshot={shown} units={units} now={now} />,
   };
+
+  if (state.status === 'loading' || !shown) return { primary: cards, status, announcement: '' };
 
   if (state.status === 'error') {
     const copy = errorCopy(state.error);

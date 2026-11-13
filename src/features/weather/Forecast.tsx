@@ -45,27 +45,30 @@ function Line({ width }: { width: string }) {
   return <Skeleton className={`inline-block h-[0.75em] align-middle ${width}`} />;
 }
 
-export function ForecastSkeleton() {
+function PendingRows() {
   return (
-    <Panel title="5-day forecast">
-      <ol aria-busy="true">
-        {Array.from({ length: DAYS }, (_, index) => (
-          <Row
-            key={index}
-            day={<Line width="w-16" />}
-            icon={<Skeleton className="size-full rounded-full" />}
-            condition={<Line width="w-20" />}
-            low={<Line width="w-6" />}
-            bar={null}
-            high={<Line width="w-6" />}
-          />
-        ))}
-      </ol>
-    </Panel>
+    <>
+      {Array.from({ length: DAYS }, (_, index) => (
+        <Row
+          key={index}
+          day={<Line width="w-16" />}
+          icon={<Skeleton className="size-full rounded-full" />}
+          condition={<Line width="w-20" />}
+          low={<Line width="w-6" />}
+          bar={null}
+          high={<Line width="w-6" />}
+        />
+      ))}
+    </>
   );
 }
 
-type ForecastProps = { snapshot: WeatherSnapshot; units: UnitSystem; now: number };
+type ForecastProps = {
+  /** Null while the first load is in flight: the rows show their skeletons. */
+  snapshot: WeatherSnapshot | null;
+  units: UnitSystem;
+  now: number;
+};
 
 /**
  * Five days on one shared temperature scale: each bar runs from that day's
@@ -73,13 +76,22 @@ type ForecastProps = { snapshot: WeatherSnapshot; units: UnitSystem; now: number
  * of the whole forecast, so warmer and cooler days are visible at a glance.
  */
 export function Forecast({ snapshot, units, now }: ForecastProps) {
+  if (!snapshot) {
+    return (
+      <Panel title="5-day forecast">
+        <ol aria-busy="true">
+          <PendingRows />
+        </ol>
+      </Panel>
+    );
+  }
   const { daily, current, utcOffsetSeconds } = snapshot;
   const bars = rangeBars(daily);
   const todayKey = localDateKey(now, utcOffsetSeconds);
 
   return (
     <Panel title="5-day forecast">
-      <ol data-testid="forecast">
+      <ol data-testid="forecast" className="motion-safe:animate-fade-in">
         {daily.map((day, index) => {
           const bar = bars[index];
           const isFirst = index === 0;

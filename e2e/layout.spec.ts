@@ -32,8 +32,8 @@ test('every interactive element is at least 44x44 at 375px, with touch or a mous
     'The 44px minimum applies below 768px.',
   );
   await page.goto('/');
-  // Open the settings menu so its controls are measured as well.
-  await page.getByRole('button', { name: 'Settings' }).click();
+  // Open the theme menu so its controls are measured as well.
+  await page.getByRole('button', { name: 'Theme' }).click();
   await expect(page.getByRole('group', { name: 'Theme' })).toBeVisible();
 
   // Radio inputs are visually hidden; their labels are the real targets.
@@ -65,7 +65,7 @@ test('every interactive element is at least 44x44 at 375px, with touch or a mous
 test('a chosen theme is applied before the app script runs', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Theme' }).click();
   await page.locator('label[title="Dark"]').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
@@ -86,7 +86,7 @@ test('compact 36px controls appear only on a wide screen with a precise pointer'
   page,
 }, testInfo) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('button', { name: 'Theme' }).click();
   const height = await page
     .locator('label[title="Dark"]')
     .evaluate((element) => Math.round(element.getBoundingClientRect().height));

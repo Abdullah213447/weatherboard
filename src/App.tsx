@@ -4,7 +4,7 @@ import { DashboardGrid } from '@/app/DashboardGrid';
 import { Panel } from '@/app/Panel';
 import { useRecentCities } from '@/features/city/recentCities';
 import { selectCity, useSelectedCity } from '@/features/city/selectedCity';
-import { SettingsMenu } from '@/features/prefs/SettingsMenu';
+import { ThemeMenu } from '@/features/prefs/ThemeMenu';
 import { CitySearch, type CitySearchHandle, type KnownCity } from '@/features/search/CitySearch';
 import { FirstRunEmptyState } from '@/features/weather/FirstRunEmptyState';
 import { useWeatherView } from '@/features/weather/useWeatherView';
@@ -27,7 +27,7 @@ export function App() {
     <AppShell
       search={<CitySearch ref={searchRef} onSelect={selectCity} known={known} />}
       status={weather.status}
-      settings={<SettingsMenu />}
+      settings={<ThemeMenu />}
       banner={
         !safeStorage.isPersistent && (
           <InlineAlert tone="info" title="Your choices will not be saved in this browser">
