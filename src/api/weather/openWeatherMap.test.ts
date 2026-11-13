@@ -88,35 +88,56 @@ describe('mapOpenWeatherMap with recorded responses', () => {
     });
   });
 
-  it('labels a day by its noon reading even when rain arrives later', () => {
-    // 15 Nov in Tokyo: overcast at 12:00, rain from 15:00 with certainty by evening.
+  it('labels a day as rain when rain arrives in the afternoon, even if noon is overcast', () => {
+    // 15 Nov in Tokyo: overcast at 12:00, 0.12 mm from 15:00, heavy by evening.
     expect(tokyo.daily[1]).toMatchObject({
       date: '2026-11-15',
       minC: 10.59,
       maxC: 18.4,
-      condition: { kind: 'cloudy', isDay: true },
+      condition: { kind: 'rain', isDay: true },
       precipitationChancePct: 100,
     });
-    // 17 Nov: raining at noon.
-    expect(tokyo.daily[3]).toMatchObject({ date: '2026-11-17', condition: { kind: 'rain' } });
+    expect(tokyo.daily.map((day) => day.condition.kind)).toEqual([
+      'cloudy',
+      'rain',
+      'cloudy',
+      'rain',
+      'rain',
+    ]);
   });
 
-  it('keeps Honolulu on the previous calendar day with daytime current conditions', () => {
+  it('keeps Honolulu on the previous calendar day and counts the rain falling now', () => {
     expect(honolulu.current.condition).toEqual({ kind: 'rain', isDay: true });
     expect(honolulu.daily[0]).toEqual({
       date: '2026-11-13',
       minC: 24.26,
       maxC: 25.09,
-      condition: { kind: 'cloudy', isDay: true },
+      condition: { kind: 'rain', isDay: true },
       precipitationChancePct: 24,
       partial: true,
     });
-    // 14 Nov: the 11:00 reading (clear) is nearer noon than the 14:00 one (rain).
-    expect(honolulu.daily[1]).toMatchObject({
-      date: '2026-11-14',
-      condition: { kind: 'clear', isDay: true },
-      precipitationChancePct: 38,
-    });
+  });
+
+  it('labels every Honolulu day as rain, because each has a daytime reading with rain in it', () => {
+    // A known consequence of the rule: these are trade-wind showers of 0.1-0.3 mm
+    // per 3 hours at a 20-38% chance, yet any reported amount counts as meaningful.
+    expect(honolulu.daily.map((day) => day.condition.kind)).toEqual([
+      'rain',
+      'rain',
+      'rain',
+      'rain',
+      'rain',
+    ]);
+  });
+
+  it('leaves a dry city on its noon reading', () => {
+    expect(karachi.daily.map((day) => day.condition.kind)).toEqual([
+      'clear',
+      'clear',
+      'clear',
+      'clear',
+      'clear',
+    ]);
   });
 });
 

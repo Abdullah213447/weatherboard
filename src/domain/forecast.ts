@@ -1,4 +1,4 @@
-import type { Condition, CurrentWeather, DailyForecast } from './weather';
+import type { Condition, ConditionKind, CurrentWeather, DailyForecast } from './weather';
 
 /** One reading from a provider that only publishes a forecast in time steps. */
 export type ForecastSlot = {
@@ -7,6 +7,8 @@ export type ForecastSlot = {
   temperatureC: number;
   condition: Condition;
   precipitationChancePct?: number;
+  /** Amount the provider expects in this step, when it reports one. */
+  precipitationMm?: number;
 };
 
 type AggregateInput = {
@@ -23,9 +25,36 @@ type AggregateInput = {
 const DAY_MS = 86_400_000;
 /** A complete day of 3-hourly readings. */
 const SLOTS_PER_FULL_DAY = 8;
-/** Readings between these local hours can stand for "the day's weather". */
+/** Readings between these local hours are "the day"; a night reading never labels one. */
+const DAYTIME_FROM = 6;
+const DAYTIME_TO = 18;
+/** With no precipitation worth mentioning, the reading nearest noon in this window labels the day. */
 const MIDDAY_FROM = 9;
 const MIDDAY_TO = 15;
+/** A chance of precipitation at or above this is worth telling the user about. */
+const MEANINGFUL_CHANCE_PCT = 50;
+
+/** Precipitation, most disruptive first. Someone planning their day needs the worst of these. */
+const PRECIPITATION_BY_SEVERITY: readonly ConditionKind[] = [
+  'thunderstorm',
+  'snow',
+  'freezing-rain',
+  'rain',
+  'drizzle',
+];
+
+function isMeaningfulPrecipitation(slot: ForecastSlot): boolean {
+  return (
+    PRECIPITATION_BY_SEVERITY.includes(slot.condition.kind) &&
+    ((slot.precipitationMm ?? 0) > 0 || (slot.precipitationChancePct ?? 0) >= MEANINGFUL_CHANCE_PCT)
+  );
+}
+
+/** The most severe precipitation kind among the readings, if any counts as meaningful. */
+function worstPrecipitation(slots: readonly ForecastSlot[]): ConditionKind | undefined {
+  const kinds = new Set(slots.filter(isMeaningfulPrecipitation).map((slot) => slot.condition.kind));
+  return PRECIPITATION_BY_SEVERITY.find((kind) => kinds.has(kind));
+}
 
 /** Shifts an instant so that its UTC fields read as the city's local time. */
 function toLocal(time: number, utcOffsetSeconds: number): Date {
@@ -64,9 +93,13 @@ function closestToNoon(
  * - Highs and lows are the extremes of that day's readings. Today also
  *   includes the current temperature, and is always marked partial because
  *   the hours already gone are missing.
- * - A day's condition is the reading nearest local noon, taken from the
- *   09:00-15:00 window so a night-time reading never labels a day. If today
- *   has no reading left in that window, the current condition is used.
+ * - A day's condition answers "what should I plan for?". If any daytime
+ *   reading (06:00-18:00 local) has meaningful precipitation, the most severe
+ *   kind labels the day, so an overcast noon followed by an afternoon of rain
+ *   reads as rain. Otherwise the reading nearest local noon labels it.
+ * - Today follows the same rule over the readings that are left, and counts
+ *   precipitation falling right now. With nothing left to go on, it shows
+ *   the current condition.
  * - Returns fewer than `days` entries only if the readings run out.
  */
 export function aggregateDaily({
@@ -94,18 +127,34 @@ export function aggregateDaily({
     const temperatures = daySlots.map((slot) => slot.temperatureC);
     if (isToday) temperatures.push(current.temperatureC);
 
-    const midday = closestToNoon(
+    const inWindow = (from: number, to: number) =>
       daySlots.filter((slot) => {
         const hour = localHour(slot.time, utcOffsetSeconds);
-        return hour >= MIDDAY_FROM && hour <= MIDDAY_TO;
-      }),
-      utcOffsetSeconds,
-    );
-    const representative =
-      midday ?? (isToday ? undefined : closestToNoon(daySlots, utcOffsetSeconds));
-    const condition: Condition = representative
-      ? { kind: representative.condition.kind, isDay: true }
-      : current.condition;
+        return hour >= from && hour <= to;
+      });
+
+    const daytime = inWindow(DAYTIME_FROM, DAYTIME_TO);
+    // Rain that is falling now is as meaningful as it gets.
+    const fallingNow =
+      isToday && current.condition.isDay
+        ? [
+            {
+              time: now,
+              temperatureC: current.temperatureC,
+              condition: current.condition,
+              precipitationChancePct: 100,
+            },
+          ]
+        : [];
+    const precipitation = worstPrecipitation([...daytime, ...fallingNow]);
+    const midday = closestToNoon(inWindow(MIDDAY_FROM, MIDDAY_TO), utcOffsetSeconds);
+    const fallback = isToday ? undefined : closestToNoon(daySlots, utcOffsetSeconds);
+
+    let condition: Condition;
+    if (precipitation) condition = { kind: precipitation, isDay: true };
+    else if (midday) condition = { kind: midday.condition.kind, isDay: true };
+    else if (fallback) condition = { kind: fallback.condition.kind, isDay: true };
+    else condition = current.condition;
 
     const chances = daySlots.flatMap((slot) =>
       slot.precipitationChancePct === undefined ? [] : [slot.precipitationChancePct],

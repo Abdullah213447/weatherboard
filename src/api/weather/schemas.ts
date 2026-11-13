@@ -27,6 +27,9 @@ export const owmForecastSchema = z.object({
         weather: z.array(owmCondition).min(1),
         /** Probability of precipitation, 0 to 1. */
         pop: z.number().optional(),
+        /** Expected amounts over the 3-hour step, in millimetres. Absent when dry. */
+        rain: z.object({ '3h': z.number() }).optional(),
+        snow: z.object({ '3h': z.number() }).optional(),
         sys: z.object({ pod: z.enum(['d', 'n']) }),
       }),
     )

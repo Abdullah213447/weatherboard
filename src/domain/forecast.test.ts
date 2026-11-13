@@ -57,6 +57,97 @@ describe('aggregateDaily', () => {
     expect(tomorrow?.condition.kind).toBe('clear');
   });
 
+  it('labels a day by afternoon rain even when noon is only overcast', () => {
+    const [, tomorrow] = aggregateDaily({
+      slots: [slot(24 + 12, 12, 'cloudy'), { ...slot(24 + 15, 11, 'rain'), precipitationMm: 0.4 }],
+      now: MIDNIGHT + HOUR,
+      utcOffsetSeconds: 0,
+      current,
+    });
+
+    expect(tomorrow?.condition).toEqual({ kind: 'rain', isDay: true });
+  });
+
+  it('picks the most severe precipitation of the day', () => {
+    const [, tomorrow] = aggregateDaily({
+      slots: [
+        { ...slot(24 + 9, 12, 'drizzle'), precipitationMm: 0.2 },
+        { ...slot(24 + 12, 12, 'rain'), precipitationMm: 2 },
+        { ...slot(24 + 15, 11, 'thunderstorm'), precipitationChancePct: 60 },
+      ],
+      now: MIDNIGHT + HOUR,
+      utcOffsetSeconds: 0,
+      current,
+    });
+
+    expect(tomorrow?.condition.kind).toBe('thunderstorm');
+  });
+
+  it('ignores precipitation with no amount and a chance below 50%', () => {
+    const [, tomorrow] = aggregateDaily({
+      slots: [
+        slot(24 + 12, 12, 'partly-cloudy'),
+        { ...slot(24 + 15, 11, 'rain'), precipitationChancePct: 49, precipitationMm: 0 },
+      ],
+      now: MIDNIGHT + HOUR,
+      utcOffsetSeconds: 0,
+      current,
+    });
+
+    expect(tomorrow?.condition.kind).toBe('partly-cloudy');
+  });
+
+  it('counts a chance of exactly 50% as meaningful', () => {
+    const [, tomorrow] = aggregateDaily({
+      slots: [
+        slot(24 + 12, 12, 'clear'),
+        { ...slot(24 + 15, 11, 'snow'), precipitationChancePct: 50 },
+      ],
+      now: MIDNIGHT + HOUR,
+      utcOffsetSeconds: 0,
+      current,
+    });
+
+    expect(tomorrow?.condition.kind).toBe('snow');
+  });
+
+  it('does not let rain outside 06:00-18:00 label the day', () => {
+    const [, tomorrow] = aggregateDaily({
+      slots: [
+        { ...slot(24 + 3, 6, 'rain'), precipitationMm: 5 },
+        slot(24 + 12, 12, 'clear'),
+        { ...slot(24 + 21, 8, 'thunderstorm'), precipitationMm: 9 },
+      ],
+      now: MIDNIGHT + HOUR,
+      utcOffsetSeconds: 0,
+      current,
+    });
+
+    expect(tomorrow?.condition.kind).toBe('clear');
+  });
+
+  it('labels today as rain when it is raining now, whatever the later readings say', () => {
+    const [today] = aggregateDaily({
+      slots: [slot(12, 14, 'clear'), slot(15, 14, 'clear')],
+      now: MIDNIGHT + 10 * HOUR,
+      utcOffsetSeconds: 0,
+      current: { temperatureC: 12, condition: { kind: 'rain', isDay: true } },
+    });
+
+    expect(today?.condition).toEqual({ kind: 'rain', isDay: true });
+  });
+
+  it('does not let rain at night right now label the day ahead', () => {
+    const [today] = aggregateDaily({
+      slots: [slot(12, 14, 'clear')],
+      now: MIDNIGHT + 2 * HOUR,
+      utcOffsetSeconds: 0,
+      current: { temperatureC: 8, condition: { kind: 'rain', isDay: false } },
+    });
+
+    expect(today?.condition).toEqual({ kind: 'clear', isDay: true });
+  });
+
   it('marks today partial and folds the current temperature into its range', () => {
     const [today] = aggregateDaily({
       slots: [slot(18, 14, 'clear'), slot(21, 12, 'clear')],
