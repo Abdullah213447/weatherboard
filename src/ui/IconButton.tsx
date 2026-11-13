@@ -28,7 +28,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cx(
-        'inline-grid size-11 shrink-0 place-items-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-grid size-11 shrink-0 place-items-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
         variants[variant],
         className,
       )}

@@ -10,6 +10,8 @@ import {
   type UnitSystem,
 } from '@/domain/units';
 import type { City, WeatherSnapshot } from '@/domain/weather';
+import type { FavouritesStore } from '@/features/favourites/favouritesStore';
+import { useFavouriteControl } from '@/features/favourites/useFavouriteControl';
 import { UnitToggle } from '@/features/prefs/UnitToggle';
 import { cx } from '@/ui/cx';
 import { Icon } from '@/ui/Icon';
@@ -36,10 +38,8 @@ type CurrentConditionsProps = {
   units: UnitSystem;
   /** Epoch milliseconds, for the city's clock. */
   now: number;
-  /** A control for the top corner, such as the favourite star. */
-  action?: ReactNode;
-  /** A line under the heading, such as why the star cannot be used. */
-  notice?: ReactNode;
+  /** Replaceable in tests. */
+  favourites?: FavouritesStore;
 };
 
 /**
@@ -56,10 +56,11 @@ export function CurrentConditions({
   snapshot,
   units,
   now,
-  action,
-  notice,
+  favourites,
 }: CurrentConditionsProps) {
   const headingId = useId();
+  // The star, and the reason it cannot be used when the list is full.
+  const { action, notice } = useFavouriteControl(city, favourites);
   const scope = snapshot ? skyScope(snapshot.current.condition) : null;
   const unit = TEMPERATURE_UNIT[units];
 

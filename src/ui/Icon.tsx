@@ -58,6 +58,13 @@ const paths = {
     </>
   ),
   arrow: <path d="M12 19V5M6.5 10.5L12 5l5.5 5.5" />,
+  'star-filled': (
+    <path
+      fill="currentColor"
+      d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9L12 3z"
+    />
+  ),
+  chevron: <path d="M6 9l6 6 6-6" />,
   bell: (
     <>
       <path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z" />

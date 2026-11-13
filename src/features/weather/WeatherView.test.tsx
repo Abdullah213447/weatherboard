@@ -4,6 +4,7 @@ import type { WeatherClient } from '@/api/weather/weatherClient';
 import { DashboardGrid } from '@/app/DashboardGrid';
 import { AppError } from '@/domain/errors';
 import type { City, WeatherSnapshot } from '@/domain/weather';
+import { favouritesStore } from '@/features/favourites/favouritesStore';
 import { resetUnitsForTests, setUnitSystem } from '@/features/prefs/units';
 import type { OfflineStore } from '@/lib/offlineStore';
 import { renderWithProviders } from '@/test/render';
@@ -29,7 +30,7 @@ function View({
   return (
     <>
       <header>{view.status}</header>
-      {view.primary && <DashboardGrid primary={view.primary} secondary={null} />}
+      {view.primary && <DashboardGrid primary={view.primary} quick={null} secondary={null} />}
       <LiveRegion message={view.announcement} />
     </>
   );
@@ -42,6 +43,7 @@ const card = () => screen.getByTestId('current-conditions');
 
 beforeEach(() => {
   window.localStorage.clear();
+  favouritesStore.reload();
   resetUnitsForTests();
   // The fixture was recorded at 01:38 in Karachi; hold the clock there.
   vi.useFakeTimers({ toFake: ['Date'], now: RECORDED_AT });

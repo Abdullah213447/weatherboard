@@ -5,12 +5,14 @@ import { renderWithProviders } from '@/test/render';
 import { server } from '@/test/server';
 import { App } from '@/App';
 import { resetSelectedCityForTests } from '@/features/city/selectedCity';
+import { favouritesStore } from '@/features/favourites/favouritesStore';
 
 describe('App shell', () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.history.replaceState(null, '', '/');
     resetSelectedCityForTests();
+    favouritesStore.reload();
   });
 
   it('renders the landmarks and the product name as the page heading', () => {
