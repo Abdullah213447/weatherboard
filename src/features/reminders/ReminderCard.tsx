@@ -39,9 +39,14 @@ const toReminderCity = (city: City): ReminderSettings['city'] => ({
   lon: city.coords.lon,
 });
 
-/** "Sunday 15 November at 07:30", on the user's own clock. */
-function formatFireTime(instant: number): string {
+/**
+ * "Sunday 15 November at 07:30", read on a clock in the reminder's own time
+ * zone, which is named beside it. Normally that is the device's zone too; if
+ * the device has since moved, the time shown still matches the time chosen.
+ */
+function formatFireTime(instant: number, timeZone: string): string {
   return new Intl.DateTimeFormat(undefined, {
+    timeZone,
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -225,8 +230,11 @@ export function ReminderCard({ controller, city, favourites, unit, online }: Rem
         {on ? (
           <p className="text-sm" data-testid="reminder-next">
             <span className="font-medium">On.</span> Next reminder:{' '}
-            {formatFireTime(nextFireAt(confirmed.time, confirmed.timeZone, now))} (
-            {confirmed.timeZone.replaceAll('_', ' ')}), for {confirmed.city.name}.
+            {formatFireTime(
+              nextFireAt(confirmed.time, confirmed.timeZone, now),
+              confirmed.timeZone,
+            )}{' '}
+            ({confirmed.timeZone.replaceAll('_', ' ')}), for {confirmed.city.name}.
           </p>
         ) : (
           <Message>

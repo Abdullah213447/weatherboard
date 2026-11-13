@@ -50,9 +50,21 @@ function isInstalled(): boolean {
   );
 }
 
+const WORKER_WAIT_MS = 5000;
+
+/**
+ * The service worker's registration. Someone who taps "Turn on" the moment
+ * the page loads can be ahead of the worker, so this waits a few seconds for
+ * it. Bounded, because where no worker is registered at all (development)
+ * `serviceWorker.ready` never settles.
+ */
 async function registration(): Promise<ServiceWorkerRegistration | null> {
-  // Not `serviceWorker.ready`: with no worker (development) that never settles.
-  return (await navigator.serviceWorker.getRegistration()) ?? null;
+  const existing = await navigator.serviceWorker.getRegistration();
+  if (existing?.active) return existing;
+  return Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<null>((resolve) => setTimeout(resolve, WORKER_WAIT_MS, null)),
+  ]);
 }
 
 function toData(subscription: PushSubscription | null): PushSubscriptionData | null {
