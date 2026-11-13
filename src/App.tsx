@@ -1,10 +1,11 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { AppShell } from '@/app/AppShell';
 import { DashboardGrid } from '@/app/DashboardGrid';
 import { Panel } from '@/app/Panel';
+import { useRecentCities } from '@/features/city/recentCities';
 import { selectCity, useSelectedCity } from '@/features/city/selectedCity';
 import { ThemeControl } from '@/features/prefs/ThemeControl';
-import { CitySearch, type CitySearchHandle } from '@/features/search/CitySearch';
+import { CitySearch, type CitySearchHandle, type KnownCity } from '@/features/search/CitySearch';
 import { FirstRunEmptyState } from '@/features/weather/FirstRunEmptyState';
 import { cityContext } from '@/domain/cities';
 import { safeStorage } from '@/lib/safeStorage';
@@ -13,10 +14,16 @@ import { InlineAlert } from '@/ui/InlineAlert';
 export function App() {
   const city = useSelectedCity();
   const searchRef = useRef<CitySearchHandle>(null);
+  const recent = useRecentCities();
+  // Favourites join this list when that feature lands.
+  const known = useMemo<KnownCity[]>(
+    () => recent.map((entry) => ({ city: entry, label: 'Recent' })),
+    [recent],
+  );
 
   return (
     <AppShell
-      search={<CitySearch ref={searchRef} onSelect={selectCity} />}
+      search={<CitySearch ref={searchRef} onSelect={selectCity} known={known} />}
       themeControl={<ThemeControl />}
       banner={
         !safeStorage.isPersistent && (

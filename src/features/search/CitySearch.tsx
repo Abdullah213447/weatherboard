@@ -8,7 +8,7 @@ import {
   type Ref,
   type SyntheticEvent,
 } from 'react';
-import { cityContext, findMatchRange, flagEmoji } from '@/domain/cities';
+import { cityContext, findMatchRange, flagEmoji, matchesPrefix } from '@/domain/cities';
 import { errorCopy } from '@/domain/errorCopy';
 import { CITY_QUERY_MESSAGES, validateCityQuery, type CityQueryProblem } from '@/domain/validation';
 import type { City } from '@/domain/weather';
@@ -28,8 +28,30 @@ export type CitySearchHandle = {
   searchFor(text: string): void;
 };
 
+/** A city the user already has a relationship with, and why. */
+export type KnownCity = { city: City; label: 'Recent' | 'Favourite' };
+
+const GEODB_ORIGIN = 'https://wft-geo-db.p.rapidapi.com';
+const MAX_OPTIONS = 6;
+
+/**
+ * Opens the connection to the search API ahead of the first request, so the
+ * DNS lookup and TLS handshake happen while the user is still typing.
+ */
+function preconnectOnce(origin: string): void {
+  if (document.head.querySelector(`link[rel="preconnect"][href="${origin}"]`)) return;
+  const link = document.createElement('link');
+  link.rel = 'preconnect';
+  link.href = origin;
+  // The search request sends custom headers, so it uses a CORS connection.
+  link.crossOrigin = 'anonymous';
+  document.head.append(link);
+}
+
 type CitySearchProps = {
   onSelect: (city: City) => void;
+  /** Recent searches and favourites: offered instantly, before the network answers. */
+  known?: readonly KnownCity[];
   ref?: Ref<CitySearchHandle>;
   /** Replaceable in tests. */
   searcher?: CitySearcher;
@@ -53,7 +75,14 @@ function CityName({ name, query }: { name: string; query: string }) {
  * of suggestions. Focus never leaves the field; the highlighted option is
  * communicated with aria-activedescendant.
  */
-export function CitySearch({ onSelect, ref, searcher = citySearcher }: CitySearchProps) {
+const NO_KNOWN: readonly KnownCity[] = [];
+
+export function CitySearch({
+  onSelect,
+  known = NO_KNOWN,
+  ref,
+  searcher = citySearcher,
+}: CitySearchProps) {
   const [search, controller] = useSearchController(searcher);
   const online = useOnline();
 
@@ -73,10 +102,23 @@ export function CitySearch({ onSelect, ref, searcher = citySearcher }: CitySearc
   const optionId = (index: number) => `${id}-option-${String(index)}`;
 
   const searchable = validateCityQuery(value) === null;
-  const options = searchable && search.status !== 'error' ? search.cities : [];
+  // Known cities come first and never move: results from the network are
+  // added underneath them, so the list grows without jumping.
+  const instant = searchable ? known.filter(({ city }) => matchesPrefix(city.name, value)) : [];
+  const settled = search.query === value.trim() && search.status === 'results';
+  const fetched =
+    !searchable || search.status === 'error'
+      ? []
+      : // Suggestions left over from the previous keystroke stay only if they still match.
+        search.cities.filter((city) => settled || matchesPrefix(city.name, value));
+  const labels = new Map(instant.map(({ city, label }) => [city.id, label]));
+  const options = [
+    ...instant.map(({ city }) => city),
+    ...fetched.filter((city) => !labels.has(city.id)),
+  ].slice(0, MAX_OPTIONS);
   const offlineNow = !online || search.error?.kind === 'offline';
   const failure = search.status === 'error' && search.error && !offlineNow ? search.error : null;
-  const noResults = searchable && search.status === 'no-results';
+  const noResults = searchable && search.status === 'no-results' && options.length === 0;
   const busy = search.status === 'searching' && search.showIndicator;
   const listVisible = open && options.length > 0;
   const panelVisible = open && searchable && (options.length > 0 || noResults || failure !== null);
@@ -84,9 +126,16 @@ export function CitySearch({ onSelect, ref, searcher = citySearcher }: CitySearc
 
   // Development only: time from the last keystroke to painted suggestions.
   const { status, timing } = search;
+  const lastInputAt = useRef(0);
+  const instantCount = instant.length;
   useEffect(() => {
     if (import.meta.env.DEV && status === 'results' && timing) markSuggestionsPainted(timing);
   }, [status, timing]);
+  useEffect(() => {
+    if (import.meta.env.DEV && instantCount > 0) {
+      markSuggestionsPainted({ inputAt: lastInputAt.current, origin: 'known' });
+    }
+  }, [instantCount, value]);
 
   const select = (city: City) => {
     onSelect(city);
@@ -99,6 +148,7 @@ export function CitySearch({ onSelect, ref, searcher = citySearcher }: CitySearc
   };
 
   const change = (next: string) => {
+    lastInputAt.current = performance.now();
     setValue(next);
     setTouched(true);
     setOpen(true);
@@ -230,6 +280,7 @@ export function CitySearch({ onSelect, ref, searcher = citySearcher }: CitySearc
           }}
           onKeyDown={onKeyDown}
           onFocus={() => {
+            preconnectOnce(GEODB_ORIGIN);
             if (searchable) setOpen(true);
           }}
           onBlur={() => {
@@ -328,6 +379,11 @@ export function CitySearch({ onSelect, ref, searcher = citySearcher }: CitySearc
                 </span>
                 <span className="text-subtle block truncate text-xs">{cityContext(city)}</span>
               </span>
+              {labels.has(city.id) && (
+                <span className="border-line text-subtle shrink-0 rounded-full border px-2 py-0.5 text-xs">
+                  {labels.get(city.id)}
+                </span>
+              )}
               <span className="text-subtle shrink-0 text-xs font-medium">{city.countryCode}</span>
             </div>
           ))}

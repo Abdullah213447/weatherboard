@@ -4,7 +4,7 @@ import { cleanCities } from '@/domain/cities';
 import { AppError } from '@/domain/errors';
 import { pageFromGeoDb } from '@/test/cities';
 import type { CitySearcher, SearchOutcome } from './citySearcher';
-import { CitySearch } from './CitySearch';
+import { CitySearch, type KnownCity } from './CitySearch';
 
 const lahoCities = cleanCities((await pageFromGeoDb('laho')).candidates);
 const londCities = cleanCities((await pageFromGeoDb('lond')).candidates);
@@ -21,13 +21,16 @@ function searcherWith(answers: Record<string, Answer>) {
   return { search };
 }
 
-function setup(answers: Record<string, Answer> = { laho: { cities: lahoCities } }) {
+function setup(
+  answers: Record<string, Answer> = { laho: { cities: lahoCities } },
+  known: KnownCity[] = [],
+) {
   const searcher = searcherWith(answers);
   const onSelect = vi.fn();
   const user = userEvent.setup();
   render(
     <>
-      <CitySearch onSelect={onSelect} searcher={searcher} />
+      <CitySearch onSelect={onSelect} searcher={searcher} known={known} />
       <button type="button">Elsewhere</button>
     </>,
   );
@@ -109,6 +112,100 @@ describe('suggestions', () => {
 
     expect(searcher.search).not.toHaveBeenCalled();
     expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+});
+
+describe('known cities (recent searches and favourites)', () => {
+  const laholm = nth(lahoCities, 3);
+  const known: KnownCity[] = [{ city: laholm, label: 'Recent' }];
+
+  /** A searcher whose answer the test releases by hand. */
+  function slowSearcher() {
+    let release: () => void = () => undefined;
+    const search = vi.fn<CitySearcher['search']>(
+      (query) =>
+        new Promise<SearchOutcome>((resolve) => {
+          release = () => {
+            resolve({ query, cities: lahoCities, servedBy: 'geodb', origin: 'network' });
+          };
+        }),
+    );
+    return {
+      searcher: { search },
+      release: () => {
+        release();
+      },
+    };
+  }
+
+  it('are offered at once, labelled, before any request has returned', async () => {
+    const { searcher } = slowSearcher();
+    const user = userEvent.setup();
+    render(<CitySearch onSelect={vi.fn()} searcher={searcher} known={known} />);
+
+    await user.type(screen.getByRole('combobox'), 'La');
+
+    const list = screen.getAllByRole('option');
+    expect(list).toHaveLength(1);
+    expect(list[0]).toHaveTextContent('Laholm');
+    expect(list[0]).toHaveTextContent('Recent');
+  });
+
+  it('stay in place when the network results arrive, which are added below without duplicates', async () => {
+    const { searcher, release } = slowSearcher();
+    const user = userEvent.setup();
+    render(<CitySearch onSelect={vi.fn()} searcher={searcher} known={known} />);
+    await user.type(screen.getByRole('combobox'), 'Laho');
+    const before = nth(screen.getAllByRole('option'), 0);
+    await waitFor(() => {
+      expect(searcher.search).toHaveBeenCalled();
+    });
+
+    release();
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('option')).toHaveLength(5);
+    });
+    const after = screen.getAllByRole('option');
+    // Same DOM node, still first: nothing moved under the pointer.
+    expect(after[0]).toBe(before);
+    expect(
+      after.map((option) => option.textContent).filter((text) => text.includes('Laholm')),
+    ).toHaveLength(1);
+    expect(after[1]).toHaveTextContent('Lahore');
+  });
+
+  it('are not offered when they do not match what was typed', async () => {
+    const { user, input } = setup({ lond: { cities: londCities } }, known);
+
+    await user.type(input, 'Lond');
+    const list = await options();
+
+    expect(list.map((option) => option.textContent).join(' ')).not.toContain('Laholm');
+  });
+
+  it('still show when the search itself finds nothing', async () => {
+    const { user, input } = setup({}, known);
+
+    await user.type(input, 'Lahol');
+
+    expect(await options()).toHaveLength(1);
+    expect(screen.queryByText(/No cities match/)).not.toBeInTheDocument();
+  });
+});
+
+describe('preconnect', () => {
+  it('opens a connection to the search API on first focus, once', async () => {
+    const { user, input } = setup();
+    const links = () => document.head.querySelectorAll('link[rel="preconnect"]');
+    for (const link of links()) link.remove();
+
+    await user.click(input);
+    await user.tab();
+    await user.click(input);
+
+    expect(links()).toHaveLength(1);
+    expect(links()[0]).toHaveAttribute('href', 'https://wft-geo-db.p.rapidapi.com');
   });
 });
 
