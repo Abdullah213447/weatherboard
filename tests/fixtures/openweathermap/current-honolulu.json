@@ -1,0 +1,25 @@
+{
+  "coord": { "lon": -157.8647, "lat": 21.3148 },
+  "weather": [{ "id": 500, "main": "Rain", "description": "light rain", "icon": "10d" }],
+  "base": "stations",
+  "main": {
+    "temp": 24.92,
+    "feels_like": 25.35,
+    "temp_min": 23.92,
+    "temp_max": 25.98,
+    "pressure": 1020,
+    "humidity": 72,
+    "sea_level": 1020,
+    "grnd_level": 1019
+  },
+  "visibility": 10000,
+  "wind": { "speed": 7.72, "deg": 70, "gust": 11.32 },
+  "rain": { "1h": 0.51 },
+  "clouds": { "all": 75 },
+  "dt": 1794602266,
+  "sys": { "type": 1, "id": 7878, "country": "US", "sunrise": 1794588079, "sunset": 1794628225 },
+  "timezone": -36000,
+  "id": 5856195,
+  "name": "Honolulu",
+  "cod": 200
+}

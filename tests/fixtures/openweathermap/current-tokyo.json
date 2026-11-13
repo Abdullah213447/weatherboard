@@ -1,0 +1,24 @@
+{
+  "coord": { "lon": 139.6503, "lat": 35.6762 },
+  "weather": [{ "id": 803, "main": "Clouds", "description": "broken clouds", "icon": "04n" }],
+  "base": "stations",
+  "main": {
+    "temp": 12.35,
+    "feels_like": 11.6,
+    "temp_min": 10.59,
+    "temp_max": 12.81,
+    "pressure": 1020,
+    "humidity": 75,
+    "sea_level": 1020,
+    "grnd_level": 1018
+  },
+  "visibility": 10000,
+  "wind": { "speed": 3.6, "deg": 20 },
+  "clouds": { "all": 75 },
+  "dt": 1794602417,
+  "sys": { "type": 2, "id": 268105, "country": "JP", "sunrise": 1794604543, "sunset": 1794641758 },
+  "timezone": 32400,
+  "id": 1862143,
+  "name": "Horinouchi",
+  "cod": 200
+}
