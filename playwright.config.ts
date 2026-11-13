@@ -40,5 +40,8 @@ export default defineConfig({
     command: `npm run build && npm run preview -- --port ${String(PORT)} --strictPort`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
+    // Placeholder keys: every API request in these tests is intercepted and
+    // answered from a recorded response, so no real key or quota is ever used.
+    env: { VITE_RAPIDAPI_KEY: 'e2e-intercepted', VITE_OPENWEATHER_API_KEY: 'e2e-intercepted' },
   },
 });
