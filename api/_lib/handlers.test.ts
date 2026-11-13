@@ -331,6 +331,24 @@ describe('dispatch', () => {
     expect(verify).toHaveBeenCalledExactlyOnceWith('sig', raw);
   });
 
+  it('logs counts and nothing that identifies a subscriber', async () => {
+    const { deps } = setup();
+    await handleSubscribe(request('/api/push/subscribe', 'POST', validBody), deps);
+    deps.now = () => Date.parse('2026-11-14T02:31:00Z');
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+
+    await handleDispatch(
+      request('/api/push/dispatch', 'POST', {}, { 'upstash-signature': 'good' }),
+      deps,
+      signedBy('good'),
+    );
+
+    const logged = info.mock.calls.flat().join(' ');
+    expect(logged).toContain('"sent":1');
+    expect(logged).not.toMatch(/fcm\.googleapis|Karachi|p256dh|auth/);
+    info.mockRestore();
+  });
+
   it('with a valid signature, sends what is due and answers with counts only', async () => {
     const { deps, sent } = setup();
     await handleSubscribe(request('/api/push/subscribe', 'POST', validBody), deps);

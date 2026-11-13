@@ -130,7 +130,10 @@ export async function handleDispatch(
       message: 'This endpoint only accepts signed requests from the scheduler.',
     });
   }
-  return json(200, { ok: true, ...(await dispatchDue(deps)) });
+  const counts = await dispatchDue(deps);
+  // Counts only, for the runtime log: no address, city or key ever appears here.
+  console.info('[reminders] dispatch', JSON.stringify(counts));
+  return json(200, { ok: true, ...counts });
 }
 
 /** Turns an unexpected failure into a response that says nothing about why. */

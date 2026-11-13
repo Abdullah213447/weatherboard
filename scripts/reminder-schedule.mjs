@@ -59,13 +59,16 @@ if (flags.has('--trigger')) {
 }
 
 if (flags.has('--logs')) {
-  const { logs } = await client.logs({ filter: { url: DESTINATION } });
-  const delivered = logs.filter((entry) => ['DELIVERED', 'ERROR', 'FAILED'].includes(entry.state));
-  console.log(`recent deliveries (${delivered.length}):`);
-  for (const entry of delivered.slice(0, 8)) {
-    const body = entry.responseBody ? String(entry.responseBody).slice(0, 200) : '';
+  // The REST endpoint directly: it reports each delivery's state and HTTP status.
+  const response = await fetch(`${baseUrl}/v2/logs`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const { events = [] } = await response.json();
+  const ours = events.filter((entry) => entry.url === DESTINATION);
+  console.log(`recent log entries for this app (${ours.length}):`);
+  for (const entry of ours.slice(0, 12)) {
     console.log(
-      `  ${new Date(entry.time).toISOString()} ${entry.state} status=${entry.responseStatus ?? '-'} ${entry.scheduleId ? 'scheduled' : 'manual'} ${body}`,
+      `  ${new Date(entry.time).toISOString()} ${String(entry.state).padEnd(9)} status=${entry.responseStatus ?? '-'} ${entry.scheduleId ? 'scheduled' : 'manual'}`,
     );
   }
 }
