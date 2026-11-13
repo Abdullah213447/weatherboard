@@ -22,7 +22,13 @@ export default defineConfig({
   projects: [
     {
       name: 'mobile',
-      use: { ...devices['Desktop Chrome'], viewport: viewports.mobile, hasTouch: true },
+      // isMobile makes Chromium report a coarse pointer, which is what the 44px rules key on.
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: viewports.mobile,
+        hasTouch: true,
+        isMobile: true,
+      },
     },
     { name: 'tablet', use: { ...devices['Desktop Chrome'], viewport: viewports.tablet } },
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: viewports.desktop } },
