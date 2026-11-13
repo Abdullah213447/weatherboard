@@ -139,12 +139,19 @@ export function CitySearch({
 
   const select = (city: City) => {
     onSelect(city);
-    setValue(city.name);
+    // A command input: once the command has run, the field is ready for the
+    // next one. The card shows which city is on screen.
+    setValue('');
+    setTouched(false);
     setProblem(null);
     setOpen(false);
     setActiveIndex(-1);
     setSelectedNotice(`${city.name}, ${cityContext(city)} selected.`);
     controller.reset();
+    // On a touch screen the keyboard would cover the weather just asked for.
+    if (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) {
+      inputRef.current?.blur();
+    }
   };
 
   const change = (next: string) => {

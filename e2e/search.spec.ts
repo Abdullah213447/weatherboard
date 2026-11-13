@@ -58,7 +58,8 @@ test('type, arrow down, Enter: the city is selected and the URL updated', async 
 
   await expect(page).toHaveURL(/[?&]city=Lahore~Punjab~PK~/);
   await expect(page.getByRole('heading', { level: 2, name: 'Lahore' })).toBeVisible();
-  await expect(search).toHaveValue('Lahore');
+  // The field is a command input: it clears, and the card carries the state.
+  await expect(search).toHaveValue('');
   await expect(options).toHaveCount(0);
 });
 

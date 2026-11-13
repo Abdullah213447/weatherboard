@@ -261,7 +261,7 @@ describe('keyboard', () => {
     await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
 
     expect(onSelect).toHaveBeenCalledExactlyOnceWith(lahoCities[1]);
-    expect(input).toHaveValue('Grand-Lahou');
+    expect(input).toHaveValue('');
     expect(input).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByRole('status')).toHaveTextContent(
       'Grand-Lahou, Lagunes District, Ivory Coast selected.',
@@ -303,7 +303,7 @@ describe('pointer', () => {
     await user.click(nth(list, 0));
 
     expect(onSelect).toHaveBeenCalledExactlyOnceWith(lahoCities[0]);
-    expect(input).toHaveValue('Lahore');
+    expect(input).toHaveValue('');
     expect(input).toHaveFocus();
     expect(input).not.toHaveAttribute('aria-invalid');
   });
@@ -315,6 +315,48 @@ describe('pointer', () => {
     await user.click(screen.getByRole('button', { name: 'Clear search' }));
 
     expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
+  });
+});
+
+describe('after a selection', () => {
+  it('clears the field and shows no error when it is then left', async () => {
+    const { user, input } = setup();
+    await user.type(input, 'Laho');
+    await options();
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    await user.tab();
+
+    expect(input).toHaveValue('');
+    expect(input).not.toHaveAttribute('aria-invalid');
+    expect(screen.queryByText('Enter a city name')).not.toBeInTheDocument();
+  });
+
+  it('dismisses the on-screen keyboard on a touch device', async () => {
+    // The test browser has no matchMedia; a phone reports a coarse pointer.
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: (query: string) => ({ matches: query === '(pointer: coarse)' }),
+    });
+    const { user, input } = setup();
+    await user.type(input, 'Laho');
+    await options();
+
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    expect(input).not.toHaveFocus();
+    expect(input).not.toHaveAttribute('aria-invalid');
+    Reflect.deleteProperty(window, 'matchMedia');
+  });
+
+  it('keeps focus in the field with a mouse or keyboard, ready for the next search', async () => {
+    const { user, input } = setup();
+    await user.type(input, 'Laho');
+    await options();
+
+    await user.keyboard('{ArrowDown}{Enter}');
+
     expect(input).toHaveFocus();
   });
 });
@@ -391,7 +433,7 @@ describe('submitting typed text', () => {
     await waitFor(() => {
       expect(onSelect).toHaveBeenCalledExactlyOnceWith(lahoCities[0]);
     });
-    expect(input).toHaveValue('Lahore');
+    expect(input).toHaveValue('');
   });
 
   it('shows the no-results message when nothing matches', async () => {
