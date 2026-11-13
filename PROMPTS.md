@@ -3,14 +3,14 @@
 **Tool:** Claude Code (Anthropic's agentic coding CLI) running inside the Cursor IDE.
 **Model:** Claude Fable 5.2.
 
-Every prompt I gave the agent is listed below in order, verbatim, with a short note on what came out of it. The only alterations are redactions of secrets pasted into a prompt, marked `[redacted]`.
+Every prompt I gave the agent is listed below in order, verbatim, with a short note on what came out of it. The only alterations are redactions of secrets pasted into a prompt, marked `[redacted]`, and local file paths shortened to project-relative ones.
 
 ---
 
 ## Prompt 1 — Planning before any code
 
 ```text
-'/Users/abdullahsiddiqui/Downloads/Edspire-Frontend-Technical-Challenge.pdf''/Users/abdullahsiddiqui/Downloads/BRIEF.md'
+'docs/Edspire-Frontend-Technical-Challenge.pdf' 'docs/BRIEF.md'
 
 I've attached the challenge brief: the original PDF and a text transcription of it (BRIEF.md). Treat the PDF as the source of truth and tell me if you find any gap between the two. First, copy both into the repo as docs/Edspire-Frontend-Technical-Challenge.pdf and docs/BRIEF.md, and add both paths to .gitignore (the brief is confidential).
 
@@ -64,3 +64,35 @@ openweather api key: [redacted]
 ```
 
 **Outcome:** The agent checked the live pricing and docs pages. QStash supports IANA timezones and schedule update/delete, but its free tier caps active schedules at 10, so one schedule per user was rejected in favour of Redis plus a single 5-minute trigger. OpenWeatherMap and Open-Meteo limits were confirmed and exercised live; GeoDB's daily cap was confirmed and its per-second rate left marked as unconfirmed. `PLAN.md` gained a Decisions section, the key went into the gitignored `.env.local`, and the docs were committed.
+
+## Prompt 3 — Standing rules, scaffold, CI, deploy config
+
+```text
+Accepted: Redis for subscriptions plus a single signed QStash trigger every 5 minutes, and 5-minute reminder steps. Yes, trim local paths in PROMPTS.md to project-relative ones. GeoDB key is now in .env.local as VITE_RAPIDAPI_KEY (don't log it in PROMPTS.md either).
+
+Now the standing rules and the scaffold.
+
+1. Create CLAUDE.md at the repo root as the standing rules for every session:
+- Read docs/PLAN.md before any task and keep its Decisions section current when something changes.
+- TypeScript strict, no `any`, no non-null assertions without a comment explaining why.
+- Domain stays pure (no React, no fetch). Components are presentational where possible; data fetching lives in feature hooks.
+- Every async UI has loading, empty, error and success states. Error copy follows the AppError taxonomy: what failed and what the user can do. Never generic.
+- Accessibility is required: semantic HTML, labelled controls, visible focus, full keyboard support, prefers-reduced-motion respected, 44x44 touch targets.
+- Use real recorded API responses for fixtures; never invent response fields.
+- Before finishing any task run `npm run check` and resolve failures before committing.
+- Conventional Commits, small and atomic, imperative mood, with a scope (e.g. feat(search): ...). Never commit secrets.
+- After each task: append my prompt verbatim to PROMPTS.md under the next number (secrets redacted), add a 1–3 line Outcome note, then commit.
+- If a request conflicts with the brief or the plan, stop and say so instead of guessing.
+
+2. Scaffold per PLAN.md: Vite + React 19 + TS strict, Tailwind v4 with the token file in place (values come in the next prompt), ESLint + Prettier, Vitest + Testing Library + MSW, Playwright installed but no tests yet, path aliases, and .env.example documenting every variable including the future push ones. npm scripts: dev, build, preview, typecheck, lint, test, test:e2e, check.
+
+3. GitHub Actions CI on push and PR: install, typecheck, lint, test, build.
+
+4. Deploy readiness: vercel.json with anPA fallback that will not swallow /api or the service worker files. Render a minimal placeholder page so the first deploy proves the pipeline. Then tell me exactly which commands to run to add the GitHub remote and push, and which env vars to set in Vercel.
+
+Done when `npm run check` and `npm run build` pass locally. Commit as separate logical commits (rules file, scaffold, CI, deploy config). Stop after that.
+
+geodb api key: [redacted]
+```
+
+**Outcome:** `CLAUDE.md`, the scaffold, CI and `vercel.json` landed as four commits; `npm run check` and `npm run build` pass. The agent pinned ESLint to v9 after a peer-dependency conflict with the accessibility plugin, fixed an option renamed in MSW 3, and added lint rules that enforce domain purity. A live test of the GeoDB key returned 403 "not subscribed", so the RapidAPI subscription still has to be activated.

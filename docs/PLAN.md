@@ -202,7 +202,7 @@ The policy is a pure function of (outcome, circuit state), so it is tested as a 
 
 **R4. API keys ship in the bundle.** Client-only means the OWM and RapidAPI keys are readable by anyone. Neither provider supports referrer restriction. Mitigation: free-tier keys only, read from `.env.local`, never committed, rotated after the review, limitation documented. A proxy is listed as a next step in the README.
 
-**R5. Key activation.** New OpenWeatherMap keys can take a while to activate. The project key is already live (checked 14 Nov). The GeoDB key is still to come; until it arrives the Open-Meteo geocoding fallback keeps search working.
+**R5. Key activation.** New OpenWeatherMap keys can take a while to activate. The project key is already live (checked 14 Nov). The RapidAPI key still needs its GeoDB Cities subscription; until then the Open-Meteo geocoding fallback keeps search working.
 
 **R6. Where the offline weather lives.** The brief places the last city's weather in the service worker's cache. Plan: the SW precaches the shell; the app writes the normalized snapshot to Cache Storage after each successful fetch. Caching raw provider responses in the SW instead would key entries by URLs containing the API key and could serve an older OWM response over a newer Open-Meteo one. Same storage, same DevTools evidence, one source of truth.
 
@@ -232,5 +232,6 @@ The policy is a pure function of (outcome, circuit state), so it is tested as a 
 | 10  | Colour carries weather in one place only: a subtle sky tint on the current-conditions card, varying by condition and day or night; the current temperature is the dominant element | One expressive moment reads as intent; colour everywhere reads as a template                         |
 | 11  | All three bonuses are in scope; icon animation is subtle and off under reduced motion                                                                                              | Units and theme are nearly free with this design, and the icon set is ours anyway                    |
 | 12  | Cut order in R10 stands                                                                                                                                                            | Protects error states, offline and responsive behaviour if time runs short                           |
+| 13  | ESLint pinned to v9                                                                                                                                                                | The accessibility lint plugin does not support v10 yet                                               |
 
-Still open: the GeoDB key (pending), and the Upstash account plus VAPID keys needed before the reminder sender can be deployed.
+Still open: the RapidAPI key exists but is not yet subscribed to GeoDB Cities (a live call returned 403 on 14 Nov), so the per-second rate is still unconfirmed; and the Upstash account plus VAPID keys are needed before the reminder sender can be deployed.
