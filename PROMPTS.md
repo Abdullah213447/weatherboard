@@ -309,3 +309,53 @@ Done when `npm run check` and e2e pass. Logical commits, log this prompt, push, 
 ```
 
 **Outcome:** The review changes landed as separate commits: the unit switch moved onto the card, the card now arrives in place with a fade, the search field clears after use, and every icon was reviewed in the preview, which showed that cloudy and partly cloudy were the same drawing (a test had passed only because generated ids differed). Favourites followed with a versioned, self-cleaning store, a star that never fails silently, and a panel folded to one row on phones so the temperature stays on the first screen. The tests found three real defects on the way: the confirm dialog did not return focus to what opened it, re-saving a stored city reordered its fields, and one long city name widened the page by 47px.
+
+## Prompt 11 — Review changes, then the installable, offline-capable PWA
+
+```text
+Review decisions:
+- Cloud-cover labelling, Open-Meteo left as is with the difference recorded, and decisions 1–6: accepted.
+- Favourites at 375: keep the fold, but change what the folded row shows. Switching city is the frequent action and removing is the rare one, so the frequent one shouldn't cost an extra tap. Folded, the panel shows the saved cities themselves as tap targets (name and temperature, the current one marked with aria-current), wrapping with names truncated so at least two fit per row and five never take more than three rows. The header keeps the count, and "Edit" opens the full list with the remove buttons as it does now. The 375x667 test must still pass with five long-named favourites; if it can't, tell me instead of adding a special case.
+- Add a test for the "Favourite" label in search suggestions.
+Commit these as their own commits.
+
+Then make it an installable, offline-capable PWA (requirement 05).
+
+Manifest and icons:
+- name, short_name, description, id, start_url and scope "/", display standalone, theme_color and background_color from our tokens, lang, categories.
+- Design a simple app mark in the brand style as an SVG and generate from it: 192 and 512 PNGs, a maskable 512 with the safe zone respected, a 180 apple-touch-icon without transparency, and the favicon.
+- Two manifest screenshots (narrow and wide) taken from the real app, for the richer install dialog.
+- theme-color meta tags that follow the active theme, including a manual override. viewport-fit=cover with safe-area insets so nothing sits under a notch or home indicator in standalone mode.
+
+Service worker (vite-plugin-pwa, injectManifest, our own sw.ts):
+- Precache the app shell: HTML, JS, CSS, the self-hosted fonts and icons. Clean up outdated caches. Keep the precache lean: manifest screenshots and other install-only assets stay out of it.
+- Navigation fallback to the precached index.html so ?city= links open offline; /api/* is excluded.
+- No runtime caching of weather or GeoDB responses in the worker. The app-ownednapshot in Cache Storage stays the single source of truth (plan R6).
+- Updates: no silent takeover. When a new version is waiting, show "A new version of WeatherBoard is ready" with Reload and Later.
+- When the shell has been cached for the first time, say so once, quietly ("Ready to use offline").
+- Disabled in dev; active in build and preview. Keep sw.ts organised so push handlers can be added next.
+
+Offline behaviour:
+- One connectivity source for the whole app, driven by the online/offline events and by real request outcomes (plan R7).
+- A banner containing the words "Offline mode", for example: "Offline mode. Showing Lahore as saved at 14:05. Search and other cities need a connection."
+- Offline is a mode, not an error: the card shows the saved snapshot with its age in neutral styling, Retry is hidden, and the data refreshes by itself when the connection returns, with "Back online" announced politely.
+- Cold start offline opens the last viewed city, taking the city from the snapshot itself so it works even without localStorage. With no snapshot, show an offline empty state that says what to do.
+- Choosing a favourite or opening a link to a city that isn't saved: say that only the last viewed city is kept offline, name it, and offer to show it.
+- An old snapshot never presents a past day as Today: forecast rows are labelled from their own dates against the city's current local date, and past days are dropped.
+
+Installed-app polish:
+- Standalone mode has no browser reload, so add a refresh action beside the status line. It's disabled while loading or offline.
+- A quiet install entry point: on Chromium, an "Install app" action using beforeinstallprompt; on iOS Safari, short Add to Home Screen steps. Dismissible, remembered, hidden when already installed or unsupported, never a modal on load.
+
+Verification:
+- Lighthouse no longer has a PWA category, so check installability in the Chromium e2e project through the DevTools protocol (Page.getInstallabilityErrors and Page.getAppManifest; confirm the method names against the current protocol docs, and use a persistent context if a regular one reports an incognito-related error). Assert no installability errors and the required manifest fields.
+- e2e against the production preview: load, choose a city, go offline with the context, reload. The shell loads, the last city renders, the "Offline mode" banner shows, search is disabled with its reason, and an unsaved favourite shows its message. Back online: banner gone, data refreshed. Also a cold start in a new page while offline.
+- vercel.json: confirm sw.js and the manifest are served without long-lived caching and with the right content types, and that hashed assets stay immutable.
+- After the deploy, run the installability and offline checks against the live URL and report the results.
+
+Give me a short manual checklist for a real phone and desktop: install, launch from the home screen, flight-mode relaunch, update prompt.
+
+Done when `npm run check` and e2e pass. Logical commits (icons and manifest, service worker, offline behaviour, install and refresh, tests), log this prompt, push, confirm CI and deploy are green.
+```
+
+**Outcome:** Folded favourites became one-tap city targets, still inside the 375x667 fold with five long names. The PWA followed: a generated icon set and manifest, a service worker that caches only the shell and waits for the user before updating, one connectivity source, and offline as a calm mode with the saved city, an honest message for cities that are not saved, and a refresh on reconnect. Installability is asserted through the DevTools protocol. The browser tests caught two layout shifts from notices that appeared after load (fixed by making them overlays), and the unit tests caught that a retry briefly replaced the saved weather with a skeleton.
