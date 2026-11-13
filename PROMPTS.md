@@ -359,3 +359,5 @@ Done when `npm run check` and e2e pass. Logical commits (icons and manifest, ser
 ```
 
 **Outcome:** Folded favourites became one-tap city targets, still inside the 375x667 fold with five long names. The PWA followed: a generated icon set and manifest, a service worker that caches only the shell and waits for the user before updating, one connectivity source, and offline as a calm mode with the saved city, an honest message for cities that are not saved, and a refresh on reconnect. Installability is asserted through the DevTools protocol. The browser tests caught two layout shifts from notices that appeared after load (fixed by making them overlays), and the unit tests caught that a retry briefly replaced the saved weather with a skeleton.
+
+*Supplied the Upstash credentials for the reminder sender; values not recorded.*
