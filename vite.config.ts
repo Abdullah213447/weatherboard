@@ -6,7 +6,10 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    alias: {
+      '@fixtures': fileURLToPath(new URL('./tests/fixtures', import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
   test: {
     globals: true,
