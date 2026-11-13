@@ -9,8 +9,8 @@ const options: { value: ThemePreference; label: string; icon: IconName }[] = [
 
 /**
  * Light / dark / system as a native radio group, so arrow keys, focus and
- * screen-reader semantics come from the browser. Compact with a mouse, 44px
- * per option on touch.
+ * screen-reader semantics come from the browser. 44px per option,
+ * 36px only on wide screens with a precise pointer.
  */
 export function ThemeControl() {
   const { preference, setPreference } = useTheme();
@@ -22,7 +22,7 @@ export function ThemeControl() {
         <label
           key={option.value}
           title={option.label}
-          className="text-muted hover:text-ink has-checked:bg-hover has-checked:text-ink has-focus-visible:outline-accent inline-grid size-9 cursor-pointer place-items-center rounded-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-1 pointer-coarse:size-11"
+          className="text-muted hover:text-ink has-checked:bg-hover has-checked:text-ink has-focus-visible:outline-accent inline-grid size-11 compact:size-9 cursor-pointer place-items-center rounded-sm transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-1"
         >
           <input
             type="radio"

@@ -24,10 +24,13 @@ for (const scheme of ['light', 'dark'] as const) {
   });
 }
 
-test('every interactive element is at least 44x44 on a touch screen', async ({
+test('every interactive element is at least 44x44 at 375px, with touch or a mouse', async ({
   page,
 }, testInfo) => {
-  test.skip(testInfo.project.name !== 'mobile', 'Touch target size applies to touch devices.');
+  test.skip(
+    !['mobile', 'mobile-fine'].includes(testInfo.project.name),
+    'The 44px minimum applies below 768px.',
+  );
   await page.goto('/');
 
   // Radio inputs are visually hidden; their labels are the real targets.
@@ -73,4 +76,15 @@ test('the UI preview is not reachable in a production build', async ({ page }) =
 
   await expect(page.getByRole('heading', { level: 1, name: 'WeatherBoard' })).toBeVisible();
   await expect(page.getByText('UI preview')).toHaveCount(0);
+});
+
+test('compact 36px controls appear only on a wide screen with a precise pointer', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/');
+  const height = await page
+    .locator('label[title="Dark"]')
+    .evaluate((element) => Math.round(element.getBoundingClientRect().height));
+
+  expect(height).toBe(['tablet', 'desktop'].includes(testInfo.project.name) ? 36 : 44);
 });

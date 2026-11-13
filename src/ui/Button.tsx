@@ -22,10 +22,11 @@ const variants: Record<Variant, string> = {
   danger: 'bg-danger-solid text-on-danger hover:bg-danger-solid-hover',
 };
 
-// `sm` is compact for a mouse and grows to a 44px target on touch screens.
+// `sm` is 44px like everything else, and 36px only under the `compact` variant
+// (768px and up with a precise pointer).
 const sizes: Record<Size, string> = {
   md: 'h-11 px-4',
-  sm: 'h-9 px-3 pointer-coarse:h-11',
+  sm: 'h-11 px-3 compact:h-9',
 };
 
 export function Button({

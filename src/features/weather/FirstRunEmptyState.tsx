@@ -20,7 +20,7 @@ export function FirstRunEmptyState({ onSelect }: FirstRunEmptyStateProps) {
               type="button"
               disabled={!onSelect}
               onClick={() => onSelect?.(city)}
-              className="border-line-strong bg-surface text-ink hover:bg-hover inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 pointer-coarse:h-11"
+              className="border-line-strong bg-surface text-ink hover:bg-hover inline-flex h-11 compact:h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
               {city}
             </button>

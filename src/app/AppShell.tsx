@@ -14,7 +14,7 @@ type AppShellProps = {
 const container = 'mx-auto w-full max-w-[80rem] px-4 md:px-6';
 
 const linkClass =
-  'text-muted hover:text-ink underline underline-offset-2 pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center';
+  'text-muted hover:text-ink underline underline-offset-2 inline-flex min-h-11 items-center compact:inline compact:min-h-0';
 
 /** Page frame: header with slots, a banner row, the main area and the attribution footer. */
 export function AppShell({ search, status, themeControl, banner, children }: AppShellProps) {

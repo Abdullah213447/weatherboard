@@ -2,6 +2,14 @@
 @import '@fontsource-variable/inter';
 @import './tokens.css';
 
+/*
+ * Controls are 44px by default. `compact:` shrinks them only where a 36px
+ * target is acceptable: a viewport of 768px or wider AND a precise pointer.
+ * A narrow window measured with a mouse still gets 44px, and so does any
+ * touch screen however wide.
+ */
+@custom-variant compact (@media (min-width: 48rem) and (pointer: fine));
+
 @layer base {
   html {
     font-family: var(--font-sans);

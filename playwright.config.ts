@@ -30,6 +30,8 @@ export default defineConfig({
         isMobile: true,
       },
     },
+    // A desktop browser window dragged down to 375px: narrow, but with a mouse.
+    { name: 'mobile-fine', use: { ...devices['Desktop Chrome'], viewport: viewports.mobile } },
     { name: 'tablet', use: { ...devices['Desktop Chrome'], viewport: viewports.tablet } },
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: viewports.desktop } },
   ],
