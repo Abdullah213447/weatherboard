@@ -49,6 +49,7 @@ export function mapOpenWeatherMap(
         condition: { kind: conditionFromOwm(condition.id), isDay: entry.sys.pod === 'd' },
         ...(entry.pop !== undefined && { precipitationChancePct: Math.round(entry.pop * 100) }),
         precipitationMm: (entry.rain?.['3h'] ?? 0) + (entry.snow?.['3h'] ?? 0),
+        ...(entry.clouds && { cloudCoverPct: entry.clouds.all }),
       },
     ];
   });

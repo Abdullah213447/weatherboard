@@ -154,6 +154,31 @@ describe('aggregateDaily', () => {
     expect(tomorrow?.condition.kind).toBe('clear');
   });
 
+  it('describes a too-light shower at noon by its cloud cover, not as rain', () => {
+    const shower = (cloudCoverPct?: number) => ({
+      ...slot(24 + 12, 12, 'rain'),
+      precipitationChancePct: 28,
+      precipitationMm: 0.13,
+      ...(cloudCoverPct !== undefined && { cloudCoverPct }),
+    });
+    const label = (cloudCoverPct?: number) =>
+      aggregateDaily({
+        slots: [shower(cloudCoverPct)],
+        now: MIDNIGHT + HOUR,
+        utcOffsetSeconds: 0,
+        current,
+      })[1]?.condition.kind;
+
+    expect(label(5)).toBe('clear');
+    expect(label(10)).toBe('clear');
+    expect(label(11)).toBe('partly-cloudy');
+    expect(label(50)).toBe('partly-cloudy');
+    expect(label(51)).toBe('cloudy');
+    expect(label(100)).toBe('cloudy');
+    // No cloud figure: a shower needs cloud.
+    expect(label()).toBe('cloudy');
+  });
+
   it('labels today as rain when it is raining now, whatever the later readings say', () => {
     const [today] = aggregateDaily({
       slots: [slot(12, 14, 'clear'), slot(15, 14, 'clear')],

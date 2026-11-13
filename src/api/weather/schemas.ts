@@ -31,6 +31,7 @@ export const owmForecastSchema = z.object({
         /** Expected amounts over the 3-hour step, in millimetres. Absent when dry. */
         rain: z.object({ '3h': z.number() }).optional(),
         snow: z.object({ '3h': z.number() }).optional(),
+        clouds: z.object({ all: z.number() }).optional(),
         sys: z.object({ pod: z.enum(['d', 'n']) }),
       }),
     )

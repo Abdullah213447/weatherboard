@@ -1,3 +1,4 @@
+import { conditionFromCloudCover } from './conditions';
 import type { Condition, ConditionKind, CurrentWeather, DailyForecast } from './weather';
 
 /** One reading from a provider that only publishes a forecast in time steps. */
@@ -9,6 +10,8 @@ export type ForecastSlot = {
   precipitationChancePct?: number;
   /** Amount the provider expects in this step, when it reports one. */
   precipitationMm?: number;
+  /** Share of the sky covered by cloud, 0-100, when the provider reports it. */
+  cloudCoverPct?: number;
 };
 
 type AggregateInput = {
@@ -51,6 +54,18 @@ function isMeaningfulPrecipitation(slot: ForecastSlot): boolean {
     ((slot.precipitationMm ?? 0) >= MEANINGFUL_AMOUNT_MM ||
       (slot.precipitationChancePct ?? 0) >= MEANINGFUL_CHANCE_PCT)
   );
+}
+
+/**
+ * What a reading says about the sky once a too-light shower is set aside.
+ * A shower below the threshold must not label a day by any route, so such a
+ * reading is described by its cloud cover instead. Without a cloud figure it
+ * is called cloudy: a shower needs cloud.
+ */
+function skyKind(slot: ForecastSlot): ConditionKind {
+  const { kind } = slot.condition;
+  if (!PRECIPITATION_BY_SEVERITY.includes(kind) || isMeaningfulPrecipitation(slot)) return kind;
+  return slot.cloudCoverPct === undefined ? 'cloudy' : conditionFromCloudCover(slot.cloudCoverPct);
 }
 
 /** The most severe precipitation kind among the readings, if any counts as meaningful. */
@@ -100,7 +115,8 @@ function closestToNoon(
  *   reading (06:00-18:00 local) has meaningful precipitation (a 50% chance
  *   or more, or at least 0.5 mm in the reading), the most severe
  *   kind labels the day, so an overcast noon followed by an afternoon of rain
- *   reads as rain. Otherwise the reading nearest local noon labels it.
+ *   reads as rain. Otherwise the reading nearest local noon labels it; if that
+ *   reading is itself a too-light shower, its cloud cover is used.
  * - Today follows the same rule over the readings that are left, and counts
  *   precipitation falling right now. With nothing left to go on, it shows
  *   the current condition.
@@ -156,8 +172,8 @@ export function aggregateDaily({
 
     let condition: Condition;
     if (precipitation) condition = { kind: precipitation, isDay: true };
-    else if (midday) condition = { kind: midday.condition.kind, isDay: true };
-    else if (fallback) condition = { kind: fallback.condition.kind, isDay: true };
+    else if (midday) condition = { kind: skyKind(midday), isDay: true };
+    else if (fallback) condition = { kind: skyKind(fallback), isDay: true };
     else condition = current.condition;
 
     const chances = daySlots.flatMap((slot) =>

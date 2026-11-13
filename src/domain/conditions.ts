@@ -21,6 +21,16 @@ export function conditionFromOwm(id: number): ConditionKind {
   return 'unknown';
 }
 
+/**
+ * Sky condition from cloud cover alone, using the same bands as the
+ * OpenWeatherMap ids above: 800 is up to 10%, 801-802 up to 50%, 803-804 beyond.
+ */
+export function conditionFromCloudCover(percent: number): ConditionKind {
+  if (percent <= 10) return 'clear';
+  if (percent <= 50) return 'partly-cloudy';
+  return 'cloudy';
+}
+
 /** WMO weather interpretation codes, as used by Open-Meteo. */
 const WMO: Readonly<Record<number, ConditionKind>> = {
   0: 'clear',

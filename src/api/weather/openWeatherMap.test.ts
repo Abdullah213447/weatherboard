@@ -119,16 +119,18 @@ describe('mapOpenWeatherMap with recorded responses', () => {
     });
   });
 
-  it('does not call Honolulu\u2019s passing showers rainy days', () => {
+  it('does not call Honolulu\u2019s passing showers rainy days, by any route', () => {
     // Trade-wind showers: 0.1-0.3 mm per 3 hours at a 20-38% chance, below both
-    // thresholds, so each day keeps its 11:00 reading. Today is rain because it
-    // is raining at the time of the reading; 17 Nov because 11:00 itself is a shower.
+    // thresholds. Today is rain only because it is raining at the time of the
+    // reading. On 17 Nov the 11:00 reading is itself such a shower, so the day is
+    // described by that reading's cloud cover instead.
+    // That reading reports 88% cloud, so 17 Nov is cloudy.
     expect(honolulu.daily.map((day) => day.condition.kind)).toEqual([
       'rain',
       'clear',
       'partly-cloudy',
       'clear',
-      'rain',
+      'cloudy',
     ]);
   });
 
