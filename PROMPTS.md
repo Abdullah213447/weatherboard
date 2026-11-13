@@ -129,3 +129,37 @@ Report CI status, the deploy trigger confirmation and the GeoDB limits. Log this
 ```
 
 **Outcome:** `main` was pushed and CI passed. GeoDB now returns 200: 1,000 requests/day from the headers, and 1 request/second observed by firing three at once, with about 600 ms per call. Recording fixtures exposed that the city-type filter drops Lahore, which GeoDB stores as an administrative area, so the planned request must change. Vercel still refused the GitHub connection, so the push-to-deploy trigger is not confirmed and production is deployed from the CLI.
+
+## Prompt 6 — Design foundation and app shell
+
+```text
+Vercel is now linked to my GitHub account and the project is connected to Abdullah213447/weatherboard. First confirm a push to main creates a production deploy; if it's still blocked, stop and tell me why before doing anything else.
+
+Good catch on Lahore and the duplicates. Leave that for the search task as you proposed.
+
+Now the design foundation and app shell. Direction: calm and confident like Mercury, tight hierarchy like Linear. Not a gradient-heavy weather template and not a default Tailwind look.
+
+Tokens (CSS variables, light and dark):
+- Neutral off-white / ink surfaces with 2–3 elevation steps expressed through background and 1px borders, not heavy shadows. One accent colour used sparingly (focus rings, primary action, active states).
+- Semantic tokens for success / warning / danger / info that pass WCAG AA in both themes. Verify the contrast ratios and record them in the plan.
+- A sky-tint scale used only on the current-conditions card, keyed by ConditionKind and day/night. Subtle: it must never pull text contrast below AA.
+- Inter, self-hosted so it works offline, with tabular numerals on every figure. A 5–6 step type scale; the current temperature is the single dominant element on screen.
+- 4/8 spacing scale, radius tokens, and motion tokens (150–200 ms, standard easing) that collapse to 0 under prefers-reduced-motion.
+
+Theme: follows the system by default; a manual light / dark / system control persisted through safeStorage; an inline head script so the wrong theme never flashes on load.
+
+Layout:
+- 375: single column. 768: two columns. 1280: dashboard grid with search, current conditions and forecast as primary; favourites and reminders as secondary.
+- Header with the search slot, theme control and a status area. A banner slot for offline and storage notices. A footer with the Open-Meteo attribution.
+- No horizontal scroll at any width; every interactive element at least 44x44 on touch.
+
+Primitives, only the ones we'll actually use: Button, IconButton (requires an accessible label), Ckeleton, InlineAlert (title, message, optional action), ConfirmDialog on Radix Dialog, and a visually-hidden live-region helper.
+
+First-run empty state, Linear style: one short sentence and 4–5 suggested-city chips including Karachi. The chips can be inert until search lands.
+
+Add a dev-only ?preview=ui view, excluded from production builds, that renders every primitive and state in both themes so I can review the system in one place.
+
+Done when it renders correctly at 375 / 768 / 1280 in both themes and `npm run check` passes. Tell me how to open the preview and point out anything you chose that I should look at critically. Log this prompt, commit and push, and confirm the deploy updated.
+```
+
+**Outcome:** A test push first confirmed that pushing to `main` deploys to production. The agent then built the tokens, theme control with a no-flash inline script, six primitives, the responsive shell, the first-run state and the dev-only preview. Contrast is enforced by a unit test over the token file (all pairings pass AA in both themes), and end-to-end tests cover the three widths, 44px touch targets, theme persistence and the preview's absence from production. It caught one bug of its own on the way: the hidden skip link kept its padding and failed the touch-target test.
