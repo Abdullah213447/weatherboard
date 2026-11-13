@@ -1,0 +1,54 @@
+/*
+ * Design tokens. This file is the single source of truth for colour, type,
+ * radius and motion. Components use the Tailwind utilities generated from the
+ * @theme block below and never hard-code a value.
+ *
+ * PLACEHOLDER VALUES: the real palette, type scale and sky tints arrive with
+ * the design pass. Only the structure is final.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --wb-surface: #ffffff;
+  --wb-surface-raised: #fafafa;
+  --wb-border: #e4e4e7;
+  --wb-text: #18181b;
+  --wb-text-muted: #71717a;
+  --wb-accent: #2563eb;
+  --wb-danger: #b91c1c;
+}
+
+/* System preference, unless the user has forced light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --wb-surface: #09090b;
+    --wb-surface-raised: #18181b;
+    --wb-border: #27272a;
+    --wb-text: #fafafa;
+    --wb-text-muted: #a1a1aa;
+    --wb-accent: #60a5fa;
+    --wb-danger: #f87171;
+  }
+}
+
+/* Manual override. Must mirror the block above. */
+:root[data-theme='dark'] {
+  --wb-surface: #09090b;
+  --wb-surface-raised: #18181b;
+  --wb-border: #27272a;
+  --wb-text: #fafafa;
+  --wb-text-muted: #a1a1aa;
+  --wb-accent: #60a5fa;
+  --wb-danger: #f87171;
+}
+
+@theme inline {
+  --color-surface: var(--wb-surface);
+  --color-surface-raised: var(--wb-surface-raised);
+  --color-border: var(--wb-border);
+  --color-text: var(--wb-text);
+  --color-text-muted: var(--wb-text-muted);
+  --color-accent: var(--wb-accent);
+  --color-danger: var(--wb-danger);
+}

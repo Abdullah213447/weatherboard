@@ -33,11 +33,11 @@ These rules apply to every session and every task in this repo.
 
 ## Commands
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start the dev server |
-| `npm run check` | Typecheck, lint, format check and unit tests |
-| `npm run build` | Production build |
-| `npm run test:e2e` | Playwright end-to-end tests |
+| Command            | Purpose                                      |
+| ------------------ | -------------------------------------------- |
+| `npm run dev`      | Start the dev server                         |
+| `npm run check`    | Typecheck, lint, format check and unit tests |
+| `npm run build`    | Production build                             |
+| `npm run test:e2e` | Playwright end-to-end tests                  |
 
 Node 22 is required (`nvm use`).

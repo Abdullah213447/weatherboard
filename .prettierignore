@@ -1,0 +1,8 @@
+dist
+coverage
+playwright-report
+test-results
+package-lock.json
+# Verbatim prompt log and the confidential brief are never reformatted.
+PROMPTS.md
+docs/BRIEF.md
