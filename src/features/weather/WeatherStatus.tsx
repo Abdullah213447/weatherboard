@@ -9,13 +9,18 @@ const PROVIDER: Record<ProviderId, string> = {
   'open-meteo': 'Open-Meteo (backup)',
 };
 
-type WeatherStatusProps = { state: WeatherState; now: number };
+type WeatherStatusProps = {
+  state: WeatherState;
+  now: number;
+  /** Offline is a mode, not a fault: the line stays neutral and says how old the data is. */
+  offline?: boolean;
+};
 
 /**
  * One quiet line in the header: how fresh the data is and where it came
  * from. The dot repeats the message in colour; the words carry the meaning.
  */
-export function WeatherStatus({ state, now }: WeatherStatusProps) {
+export function WeatherStatus({ state, now, offline = false }: WeatherStatusProps) {
   if (state.status === 'idle') return null;
 
   let dot = 'bg-subtle motion-safe:animate-pulse-soft';
@@ -25,6 +30,9 @@ export function WeatherStatus({ state, now }: WeatherStatusProps) {
     const backup = state.snapshot.provider === 'open-meteo';
     dot = backup ? 'bg-warning' : 'bg-success';
     text = `Updated ${relativeTime(state.snapshot.fetchedAt, now)} · ${PROVIDER[state.snapshot.provider]}`;
+  } else if (state.status === 'error' && offline) {
+    dot = 'bg-subtle';
+    text = state.saved ? `Offline · saved ${relativeTime(state.saved.fetchedAt, now)}` : 'Offline';
   } else if (state.status === 'error') {
     dot = 'bg-danger';
     text = state.saved

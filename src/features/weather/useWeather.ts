@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { weatherClient, type WeatherClient } from '@/api/weather';
 import { AppError, isAppError, isRetryable } from '@/domain/errors';
 import type { City, WeatherSnapshot } from '@/domain/weather';
@@ -14,7 +14,7 @@ export type WeatherState =
   | { status: 'idle' }
   | { status: 'loading' }
   /** Fresh data. `isRefreshing` is true while a newer copy is on its way. */
-  | { status: 'success'; snapshot: WeatherSnapshot; isRefreshing: boolean }
+  | { status: 'success'; snapshot: WeatherSnapshot; isRefreshing: boolean; refresh: () => void }
   /**
    * The request failed. `saved` holds the last snapshot of this same city if
    * there is one, so the screen can show it with its age instead of nothing.
@@ -81,9 +81,26 @@ export function useWeather(
     },
   });
 
+  // While a failed request is being tried again, the query briefly reports
+  // "pending". The screen should not fall back to a skeleton then: it keeps
+  // showing the saved copy until the retry settles. Remembering the failure
+  // across renders is what makes that possible.
+  const [lastFailure, setLastFailure] = useState<{ cityId: string; error: unknown } | null>(null);
+  if (city && live.isError && lastFailure?.error !== live.error) {
+    setLastFailure({ cityId: city.id, error: live.error });
+  }
+  if (live.isSuccess && lastFailure) setLastFailure(null);
+
   if (city === null) return { status: 'idle' };
   if (live.isSuccess) {
-    return { status: 'success', snapshot: live.data, isRefreshing: live.isFetching };
+    return {
+      status: 'success',
+      snapshot: live.data,
+      isRefreshing: live.isFetching,
+      refresh: () => {
+        void live.refetch();
+      },
+    };
   }
   if (live.isError && !saved.isLoading) {
     return {
@@ -91,6 +108,16 @@ export function useWeather(
       error: toAppError(live.error),
       // A failed refresh keeps the data it was refreshing; prefer that over the stored copy.
       saved: live.data ?? saved.data ?? null,
+      retry: () => {
+        void live.refetch();
+      },
+    };
+  }
+  if (lastFailure?.cityId === city.id && saved.data) {
+    return {
+      status: 'error',
+      error: toAppError(lastFailure.error),
+      saved: saved.data,
       retry: () => {
         void live.refetch();
       },

@@ -85,24 +85,37 @@ export function Forecast({ snapshot, units, now }: ForecastProps) {
       </Panel>
     );
   }
-  const { daily, current, utcOffsetSeconds } = snapshot;
-  const bars = rangeBars(daily);
+  const { current, utcOffsetSeconds } = snapshot;
   const todayKey = localDateKey(now, utcOffsetSeconds);
+  // Rows are labelled from their own dates. A snapshot saved yesterday must not
+  // present yesterday as "Today", so days already over in the city are dropped.
+  const daily = snapshot.daily.filter((day) => day.date >= todayKey);
+  const bars = rangeBars(daily);
+
+  if (daily.length === 0) {
+    return (
+      <Panel title="5-day forecast">
+        <p className="text-muted text-sm">
+          The saved forecast has run out. It will be replaced as soon as the weather can be
+          refreshed.
+        </p>
+      </Panel>
+    );
+  }
 
   return (
     <Panel title="5-day forecast">
       <ol data-testid="forecast" className="motion-safe:animate-fade-in">
         {daily.map((day, index) => {
           const bar = bars[index];
-          const isFirst = index === 0;
+          const isToday = day.date === todayKey;
           const chance = day.precipitationChancePct;
           return (
             <Row
               key={day.date}
               day={
                 <>
-                  {/* The first row is the provider's "today" even if the clock has just passed midnight. */}
-                  {isFirst ? 'Today' : dayLabel(day.date, todayKey)}
+                  {dayLabel(day.date, todayKey)}
                   {day.partial && (
                     <span className="text-muted font-normal">
                       {' '}
@@ -140,7 +153,7 @@ export function Forecast({ snapshot, units, now }: ForecastProps) {
                         width: `${String(bar.widthPct)}%`,
                       }}
                     />
-                    {isFirst && (
+                    {isToday && (
                       <span
                         aria-hidden="true"
                         data-testid="current-marker"

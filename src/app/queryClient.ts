@@ -8,7 +8,10 @@ import { QueryClient } from '@tanstack/react-query';
 export function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
-      queries: { retry: false, refetchOnWindowFocus: false },
+      // networkMode 'always': by default a query pauses while the browser says it
+      // is offline and never reports back. Ours must run and fail, because that
+      // failure is what switches the app to the saved snapshot.
+      queries: { retry: false, refetchOnWindowFocus: false, networkMode: 'always' },
     },
   });
 }

@@ -1,4 +1,5 @@
 import { AppError, type AppErrorSource } from '@/domain/errors';
+import { connectivity } from '@/lib/connectivity';
 
 export type FetchJsonOptions = {
   /** Which service this is, so a failure can say what failed. */
@@ -15,6 +16,8 @@ export type HttpDeps = {
   fetch: typeof fetch;
   /** The browser's own view of connectivity, used to tell offline from blocked. */
   isOnline: () => boolean;
+  /** Told whether each request reached the network, for the app's connectivity state. */
+  onReachability?: (reachable: boolean) => void;
 };
 
 export const DEFAULT_TIMEOUT_MS = 8000;
@@ -79,12 +82,16 @@ export function createFetchJson(deps: HttpDeps): FetchJson {
         });
       } catch (cause) {
         // fetch rejects without a status when nothing came back at all.
-        throw classify(
-          cause,
-          () => new AppError(deps.isOnline() ? 'network' : 'offline', source, { cause }),
-        );
+        throw classify(cause, () => {
+          const online = deps.isOnline();
+          // One blocked host is not proof of being offline; the browser saying so is.
+          if (!online) deps.onReachability?.(false);
+          return new AppError(online ? 'network' : 'offline', source, { cause });
+        });
       }
 
+      // Any HTTP status at all means the network was reached.
+      deps.onReachability?.(true);
       if (!response.ok) throw errorFromStatus(response, source);
 
       try {
@@ -105,4 +112,8 @@ export function createFetchJson(deps: HttpDeps): FetchJson {
 export const fetchJson: FetchJson = createFetchJson({
   fetch: (input, init) => globalThis.fetch(input, init),
   isOnline: () => navigator.onLine,
+  onReachability: (reachable) => {
+    if (reachable) connectivity.reportReachable();
+    else connectivity.reportUnreachable();
+  },
 });

@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import { cityContext } from '@/domain/cities';
 import { conditionLabel } from '@/domain/conditionLabel';
-import { formatLocalDate, formatLocalTime } from '@/domain/time';
+import { formatLocalDate, formatLocalTime, localDateKey } from '@/domain/time';
 import {
   compassPoint,
   formatTemperature,
@@ -68,6 +68,11 @@ export function CurrentConditions({
     snapshot ? <Arrived>{render(snapshot)}</Arrived> : <Pending width={pendingWidth} />;
   const time = (loaded: WeatherSnapshot, instant: number) =>
     formatLocalTime(instant, loaded.utcOffsetSeconds);
+  /** Today's forecast entry by date, so an old saved snapshot never passes off a past day as today. */
+  const todayOf = (loaded: WeatherSnapshot) => {
+    const key = localDateKey(now, loaded.utcOffsetSeconds);
+    return loaded.daily.find((day) => day.date === key);
+  };
 
   const metrics: Record<(typeof METRIC_LABELS)[number], (loaded: WeatherSnapshot) => ReactNode> = {
     Humidity: ({ current }) => `${String(Math.round(current.humidityPct))}%`,
@@ -92,10 +97,10 @@ export function CurrentConditions({
         )}
       </span>
     ),
-    'Chance of rain': ({ daily }) =>
-      daily[0]?.precipitationChancePct === undefined
-        ? 'Not reported'
-        : `${String(Math.round(daily[0].precipitationChancePct))}%`,
+    'Chance of rain': (loaded) => {
+      const chance = todayOf(loaded)?.precipitationChancePct;
+      return chance === undefined ? 'Not reported' : `${String(Math.round(chance))}%`;
+    },
     Sunrise: (loaded) => (loaded.sun ? time(loaded, loaded.sun.sunriseAt) : 'None today'),
     Sunset: (loaded) => (loaded.sun ? time(loaded, loaded.sun.sunsetAt) : 'None today'),
   };
@@ -167,8 +172,9 @@ export function CurrentConditions({
         {value((loaded) => conditionLabel(loaded.current.condition), 'w-28')}
       </p>
       <p className="text-muted text-sm">
-        {value(({ current, daily }) => {
-          const [today] = daily;
+        {value((loaded) => {
+          const { current } = loaded;
+          const today = todayOf(loaded);
           return (
             <>
               Feels like {formatTemperature(current.feelsLikeC, units)}

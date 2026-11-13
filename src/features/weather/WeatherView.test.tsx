@@ -9,6 +9,8 @@ import { resetUnitsForTests, setUnitSystem } from '@/features/prefs/units';
 import type { OfflineStore } from '@/lib/offlineStore';
 import { renderWithProviders } from '@/test/render';
 import { karachi, karachiBackupSnapshot, karachiSnapshot, RECORDED_AT } from '@/test/weather';
+import { resetAnnouncerForTests } from '@/ui/announce';
+import { Announcer } from '@/ui/Announcer';
 import { LiveRegion } from '@/ui/LiveRegion';
 import { useWeatherView } from './useWeatherView';
 
@@ -21,17 +23,31 @@ function View({
   city,
   client,
   saved,
+  onOpenCity,
 }: {
-  city: City;
+  city: City | null;
   client: WeatherClient;
   saved?: WeatherSnapshot;
+  onOpenCity?: (city: City) => void;
 }) {
-  const view = useWeatherView(city, { client, store: store(saved ?? null) });
+  const view = useWeatherView(city, {
+    deps: { client, store: store(saved ?? null) },
+    ...(onOpenCity && { onOpenCity }),
+  });
   return (
     <>
-      <header>{view.status}</header>
+      <header>
+        {view.status}
+        {view.refresh && (
+          <button type="button" disabled={view.refresh.disabled} onClick={view.refresh.onClick}>
+            Refresh weather
+          </button>
+        )}
+      </header>
+      {view.offlineMessage !== null && <p data-testid="offline-banner">{view.offlineMessage}</p>}
       {view.primary && <DashboardGrid primary={view.primary} quick={null} secondary={null} />}
       <LiveRegion message={view.announcement} />
+      <Announcer />
     </>
   );
 }
@@ -45,6 +61,7 @@ beforeEach(() => {
   window.localStorage.clear();
   favouritesStore.reload();
   resetUnitsForTests();
+  resetAnnouncerForTests();
   // The fixture was recorded at 01:38 in Karachi; hold the clock there.
   vi.useFakeTimers({ toFake: ['Date'], now: RECORDED_AT });
   document.title = 'WeatherBoard';
@@ -162,7 +179,9 @@ describe('success', () => {
     renderWithProviders(<View city={karachi} client={resolved(karachiSnapshot)} />);
 
     await waitFor(() => {
-      expect(screen.getByRole('status')).toHaveTextContent('Karachi: 26 degrees Celsius, Fog.');
+      expect(screen.getAllByRole('status')[0]).toHaveTextContent(
+        'Karachi: 26 degrees Celsius, Fog.',
+      );
     });
     expect(document.title).toBe('Karachi 26° · WeatherBoard');
   });
@@ -255,16 +274,17 @@ describe('failure with nothing saved', () => {
 
 describe('failure with a saved copy of the same city', () => {
   it('shows the saved weather with when it is from, why it is stale, and a retry', async () => {
-    const client = rejected(new AppError('offline', 'weather'));
+    const client = rejected(new AppError('rate-limited', 'weather'));
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) });
     renderWithProviders(<View city={karachi} client={client} saved={karachiSnapshot} />);
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(/^Showing data from \d{1,2}:\d{2}/);
-    expect(alert).toHaveTextContent('Couldn’t refresh: You are offline.');
+    expect(alert).toHaveTextContent('Couldn\u2019t refresh: Too many requests to the weather.');
     expect(within(card()).getByText('26°')).toBeInTheDocument();
     expect(screen.getByTestId('forecast')).toBeInTheDocument();
     expect(screen.getByTestId('weather-status')).toHaveTextContent('Could not refresh · saved');
+    expect(screen.queryByTestId('offline-banner')).not.toBeInTheDocument();
     expect(document.title).toBe('Karachi 26° · WeatherBoard');
 
     client.mockResolvedValueOnce(karachiBackupSnapshot);
@@ -274,5 +294,215 @@ describe('failure with a saved copy of the same city', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
     expect(within(card()).getByText('25°')).toBeInTheDocument();
+  });
+});
+
+describe('offline mode', () => {
+  const goOffline = () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    window.dispatchEvent(new Event('offline'));
+  };
+  const goOnline = () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    window.dispatchEvent(new Event('online'));
+  };
+  const offlineError = () => rejected(new AppError('offline', 'weather'));
+
+  it('shows the saved city plainly: its age, no alarm, and nothing to retry', async () => {
+    goOffline();
+    renderWithProviders(<View city={karachi} client={offlineError()} saved={karachiSnapshot} />);
+
+    expect(await within(card()).findByText('26°')).toBeInTheDocument();
+    expect(screen.getByTestId('offline-banner')).toHaveTextContent(
+      /^Showing Karachi as saved at \d{1,2}:\d{2}.*\. Search and other cities need a connection\.$/,
+    );
+    expect(screen.getByTestId('weather-status')).toHaveTextContent('Offline · saved just now');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Refresh weather' })).toBeDisabled();
+  });
+
+  it('treats a request that failed for lack of a connection the same way, whatever the browser claims', async () => {
+    renderWithProviders(<View city={karachi} client={offlineError()} saved={karachiSnapshot} />);
+
+    expect(await screen.findByTestId('offline-banner')).toHaveTextContent(
+      'Showing Karachi as saved',
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('refreshes by itself when the connection returns, and says so politely', async () => {
+    goOffline();
+    const client = offlineError();
+    renderWithProviders(<View city={karachi} client={client} saved={karachiSnapshot} />);
+    // Wait for the saved weather itself: the banner alone appears before the request has failed.
+    expect(await within(card()).findByText('26°')).toBeInTheDocument();
+    expect(client).toHaveBeenCalledTimes(1);
+
+    client.mockResolvedValueOnce(karachiBackupSnapshot);
+    act(() => {
+      goOnline();
+    });
+
+    await waitFor(() => {
+      expect(client).toHaveBeenCalledTimes(2);
+    });
+    await waitFor(() => {
+      expect(screen.queryByTestId('offline-banner')).not.toBeInTheDocument();
+    });
+    expect(within(card()).getByText('25°')).toBeInTheDocument();
+    expect(screen.getAllByRole('status').at(-1)).toHaveTextContent(
+      'Back online. Updating the weather.',
+    );
+    expect(screen.getByRole('button', { name: 'Refresh weather' })).toBeEnabled();
+  });
+
+  it('keeps the saved weather on screen while the retry is in flight, with no skeleton', async () => {
+    goOffline();
+    let release: (snapshot: WeatherSnapshot) => void = () => undefined;
+    const client = vi
+      .fn<WeatherClient>()
+      .mockRejectedValueOnce(new AppError('offline', 'weather'))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            release = resolve;
+          }),
+      );
+    renderWithProviders(<View city={karachi} client={client} saved={karachiSnapshot} />);
+    expect(await within(card()).findByText('26°')).toBeInTheDocument();
+
+    act(() => {
+      goOnline();
+    });
+    await waitFor(() => {
+      expect(client).toHaveBeenCalledTimes(2);
+    });
+
+    // Still the saved 26°, not a loading placeholder.
+    expect(card()).not.toHaveAttribute('aria-busy');
+    expect(within(card()).getByText('26°')).toBeInTheDocument();
+
+    await act(async () => {
+      release(karachiBackupSnapshot);
+      await Promise.resolve();
+    });
+    expect(await within(card()).findByText('25°')).toBeInTheDocument();
+  });
+
+  it('for a city that is not the saved one: says which city is kept, and offers it', async () => {
+    goOffline();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) });
+    const onOpenCity = vi.fn();
+    const lahore: City = { ...karachi, id: 'PK:31.42,74.33', name: 'Lahore', region: 'Punjab' };
+    renderWithProviders(
+      <View
+        city={lahore}
+        client={offlineError()}
+        saved={karachiSnapshot}
+        onOpenCity={onOpenCity}
+      />,
+    );
+
+    expect(
+      await screen.findByText(/Only the last city you viewed is kept for offline use/),
+    ).toHaveTextContent('that is Karachi. Lahore will load when you are back online.');
+    expect(screen.getByRole('heading', { name: 'Lahore' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('current-conditions')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Show Karachi' }));
+
+    expect(onOpenCity).toHaveBeenCalledExactlyOnceWith(karachi);
+  });
+
+  it('with nothing saved: says so and what to do', async () => {
+    goOffline();
+    renderWithProviders(<View city={karachi} client={offlineError()} />);
+
+    expect(await screen.findByText(/Nothing has been saved for offline use yet/)).toHaveTextContent(
+      'Reconnect and open a city once',
+    );
+    expect(screen.getByTestId('offline-banner')).toHaveTextContent(
+      'Search and new weather need a connection.',
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('on a cold start with no remembered city, opens the saved one', async () => {
+    goOffline();
+    const onOpenCity = vi.fn();
+    renderWithProviders(
+      <View city={null} client={offlineError()} saved={karachiSnapshot} onOpenCity={onOpenCity} />,
+    );
+
+    await waitFor(() => {
+      expect(onOpenCity).toHaveBeenCalledWith(karachi);
+    });
+  });
+
+  it('does not open anything on a cold start while online', async () => {
+    const onOpenCity = vi.fn();
+    renderWithProviders(
+      <View city={null} client={offlineError()} saved={karachiSnapshot} onOpenCity={onOpenCity} />,
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(onOpenCity).not.toHaveBeenCalled();
+  });
+});
+
+describe('an old saved snapshot', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  it('labels days from their own dates and drops the ones already over', async () => {
+    // Two days after the snapshot was taken: 16 Nov in Karachi.
+    vi.setSystemTime(RECORDED_AT + 2 * DAY);
+    renderWithProviders(<View city={karachi} client={resolved(karachiSnapshot)} />);
+
+    const rows = within(await screen.findByTestId('forecast')).getAllByRole('listitem');
+
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toHaveTextContent('Today');
+    // 16 Nov was a full day in the snapshot, so it is not marked partial.
+    expect(rows[0]).not.toHaveTextContent('(rest of day)');
+    expect(rows[1]).toHaveTextContent('Tuesday');
+    expect(rows[2]).toHaveTextContent('Wednesday');
+    expect(screen.queryByText('Saturday')).not.toBeInTheDocument();
+    // The card's high and low are today's, not the first stored day's.
+    expect(within(card()).getByText(/High 30° · Low 26°/)).toBeInTheDocument();
+  });
+
+  it('says the forecast has run out when every stored day is over', async () => {
+    vi.setSystemTime(RECORDED_AT + 10 * DAY);
+    renderWithProviders(<View city={karachi} client={resolved(karachiSnapshot)} />);
+
+    expect(await screen.findByText(/The saved forecast has run out/)).toBeInTheDocument();
+    expect(screen.queryByTestId('forecast')).not.toBeInTheDocument();
+    expect(within(card()).getByText(/^Feels like 26°$/)).toBeInTheDocument();
+  });
+});
+
+describe('refresh', () => {
+  it('fetches again on request, and is unavailable while loading', async () => {
+    const client = resolved(karachiSnapshot);
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) });
+    renderWithProviders(<View city={karachi} client={client} />);
+    expect(screen.getByRole('button', { name: 'Refresh weather' })).toBeDisabled();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Refresh weather' })).toBeEnabled();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Refresh weather' }));
+
+    await waitFor(() => {
+      expect(client).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('is absent when no city is chosen', () => {
+    renderWithProviders(<View city={null} client={resolved(karachiSnapshot)} />);
+
+    expect(screen.queryByRole('button', { name: 'Refresh weather' })).not.toBeInTheDocument();
   });
 });
