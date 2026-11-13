@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { decodeCityParam, encodeCityParam } from '@/domain/cities';
 import type { City } from '@/domain/weather';
 import { safeStorage } from '@/lib/safeStorage';
+import { addRecentCity } from './recentCities';
 
 /**
  * The city on screen. Two things must survive a reload: the link (so a URL
@@ -89,6 +90,7 @@ export function selectCity(city: City): void {
   if (current?.id !== city.id) window.history.pushState(null, '', urlFor(city));
   current = city;
   safeStorage.set(LAST_CITY_KEY, JSON.stringify(city));
+  addRecentCity(city);
   emit();
 }
 
