@@ -285,6 +285,11 @@ export function UiPreview() {
         <DialogDemo />
         <Section title="Dashboard grid, loading state (resize to 375 / 768 / 1280)">
           <DashboardGrid
+            quick={
+              <Panel title="Favourites">
+                <Skeleton className="h-6 w-full" />
+              </Panel>
+            }
             primary={{
               current: (
                 <Panel title="Current conditions">
@@ -304,9 +309,6 @@ export function UiPreview() {
             }}
             secondary={
               <>
-                <Panel title="Favourites">
-                  <Skeleton className="h-6 w-full" />
-                </Panel>
                 <Panel title="Daily reminder">
                   <Skeleton className="h-6 w-full" />
                 </Panel>
