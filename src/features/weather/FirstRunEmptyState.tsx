@@ -1,7 +1,7 @@
 const SUGGESTED_CITIES = ['Karachi', 'Lahore', 'London', 'New York', 'Tokyo'] as const;
 
 type FirstRunEmptyStateProps = {
-  /** Called with a city name. Until search exists the chips are disabled. */
+  /** Called with a city name; the app runs a search for it. Chips are disabled without it. */
   onSelect?: (cityName: string) => void;
 };
 

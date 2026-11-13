@@ -1,16 +1,22 @@
+import { useRef } from 'react';
 import { AppShell } from '@/app/AppShell';
 import { DashboardGrid } from '@/app/DashboardGrid';
 import { Panel } from '@/app/Panel';
+import { selectCity, useSelectedCity } from '@/features/city/selectedCity';
 import { ThemeControl } from '@/features/prefs/ThemeControl';
-import { SearchPlaceholder } from '@/features/search/SearchPlaceholder';
+import { CitySearch, type CitySearchHandle } from '@/features/search/CitySearch';
 import { FirstRunEmptyState } from '@/features/weather/FirstRunEmptyState';
+import { cityContext } from '@/domain/cities';
 import { safeStorage } from '@/lib/safeStorage';
 import { InlineAlert } from '@/ui/InlineAlert';
 
 export function App() {
+  const city = useSelectedCity();
+  const searchRef = useRef<CitySearchHandle>(null);
+
   return (
     <AppShell
-      search={<SearchPlaceholder />}
+      search={<CitySearch ref={searchRef} onSelect={selectCity} />}
       themeControl={<ThemeControl />}
       banner={
         !safeStorage.isPersistent && (
@@ -25,7 +31,15 @@ export function App() {
         primary={{
           empty: (
             <Panel className="h-full">
-              <FirstRunEmptyState />
+              {city ? (
+                // Stands in for the conditions card and forecast, which are the next step.
+                <div className="flex flex-col gap-1 py-6 md:py-10">
+                  <h2 className="text-xl font-semibold">{city.name}</h2>
+                  <p className="text-muted text-sm">{cityContext(city)}</p>
+                </div>
+              ) : (
+                <FirstRunEmptyState onSelect={(name) => searchRef.current?.searchFor(name)} />
+              )}
             </Panel>
           ),
         }}
