@@ -58,6 +58,15 @@ const ICONS = [
   },
 ];
 
+// The notification badge: the bare mark in white on a transparent background.
+// Android shows only its shape, tinted, in the status bar.
+ICONS.push({
+  file: 'public/icons/badge-96.png',
+  size: 96,
+  svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><g transform="translate(256 256) scale(1.05) translate(-256 -278)">${markBody.replaceAll('#f7f7f5', '#ffffff')}</g></svg>`,
+  transparent: true,
+});
+
 const browser = await chromium.launch();
 
 for (const icon of ICONS) {
