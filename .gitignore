@@ -1,0 +1,8 @@
+# Confidential challenge brief - never commit
+docs/Edspire-Frontend-Technical-Challenge.pdf
+docs/BRIEF.md
+
+# Local secrets
+.env
+.env.local
+.env.*.local
