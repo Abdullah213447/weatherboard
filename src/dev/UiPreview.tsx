@@ -10,7 +10,7 @@ import { Panel } from '@/app/Panel';
 import { CONDITION_KINDS, type Condition } from '@/domain/weather';
 import { ThemeControl } from '@/features/prefs/ThemeControl';
 import { FirstRunEmptyState } from '@/features/weather/FirstRunEmptyState';
-import { skyTintVar } from '@/features/weather/skyTint';
+import { skyScope } from '@/features/weather/skyTint';
 import { contrastRatio } from '@/lib/contrast';
 import { Button } from '@/ui/Button';
 import { ConfirmDialog } from '@/ui/ConfirmDialog';
@@ -89,15 +89,17 @@ function Specimens() {
         </div>
       </Section>
 
-      <Section title="Sky tints (current-conditions card only; ratio is muted text on the tint)">
+      <Section title="Sky tints (current-conditions card only; night cards are always dark; ratio is muted text on the tint)">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {skyConditions.map((condition) => {
             const key = `sky-${condition.kind}-${condition.isDay ? 'day' : 'night'}`;
+            const scope = skyScope(condition);
             return (
               <div
                 key={key}
-                className="border-line flex flex-col rounded-md border p-3"
-                style={{ backgroundColor: skyTintVar(condition) }}
+                data-theme={scope.theme}
+                className="border-line text-ink flex flex-col rounded-md border p-3"
+                style={{ backgroundColor: scope.background }}
               >
                 <span className="text-xl font-medium">24°</span>
                 <span className="text-muted text-xs">

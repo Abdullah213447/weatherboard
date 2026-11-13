@@ -60,30 +60,23 @@
   --wb-shadow-raised: 0 1px 2px rgb(26 26 24 / 0.04), 0 12px 32px rgb(26 26 24 / 0.1);
 
   /*
-   * Sky tints. Used only as the background of the current-conditions card,
-   * keyed by condition and day/night. Deliberately faint: ink and muted text
-   * must stay above 4.5:1 on every one of them.
+   * Sky tints: the background of the current-conditions card and nothing else.
+   * Each condition has its own character (open blue, slate teal, hazy warm
+   * grey...). The light theme defines daytime tints only: at night the card
+   * switches itself to the dark scope, so it becomes a deep navy island with
+   * light text whatever the page theme is. Ink, muted text and the accent must
+   * stay above 4.5:1 on every tint; tokens.test.ts enforces it.
    */
-  --wb-sky-clear-day: #e8f2fd;
-  --wb-sky-clear-night: #eae9f8;
-  --wb-sky-partly-cloudy-day: #ecf2f9;
-  --wb-sky-partly-cloudy-night: #ebebf5;
-  --wb-sky-cloudy-day: #eef0f3;
-  --wb-sky-cloudy-night: #ebecf1;
-  --wb-sky-fog-day: #f1f1ef;
-  --wb-sky-fog-night: #ededee;
-  --wb-sky-drizzle-day: #e9f1f3;
-  --wb-sky-drizzle-night: #e8ecf2;
-  --wb-sky-rain-day: #e4eef5;
-  --wb-sky-rain-night: #e4e8f2;
-  --wb-sky-freezing-rain-day: #e6f1f6;
-  --wb-sky-freezing-rain-night: #e5ebf4;
-  --wb-sky-snow-day: #f2f6fb;
-  --wb-sky-snow-night: #eef0f8;
-  --wb-sky-thunderstorm-day: #ebe9f5;
-  --wb-sky-thunderstorm-night: #e6e4f2;
-  --wb-sky-unknown-day: #f3f3f1;
-  --wb-sky-unknown-night: #efeff0;
+  --wb-sky-clear-day: #cde7fb;
+  --wb-sky-partly-cloudy-day: #dbe8f5;
+  --wb-sky-cloudy-day: #dbe0e8;
+  --wb-sky-fog-day: #e6e0d6;
+  --wb-sky-drizzle-day: #d3e5e4;
+  --wb-sky-rain-day: #cde3e4;
+  --wb-sky-freezing-rain-day: #d0e4ec;
+  --wb-sky-snow-day: #e6f1fa;
+  --wb-sky-thunderstorm-day: #e2deee;
+  --wb-sky-unknown-day: #ececea;
 }
 
 [data-theme='dark'] {
@@ -128,26 +121,26 @@
   --wb-scrim: rgb(0 0 0 / 0.6);
   --wb-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px rgb(0 0 0 / 0.45);
 
-  --wb-sky-clear-day: #12233a;
-  --wb-sky-clear-night: #15152b;
-  --wb-sky-partly-cloudy-day: #15222f;
-  --wb-sky-partly-cloudy-night: #17182a;
-  --wb-sky-cloudy-day: #1a1e24;
-  --wb-sky-cloudy-night: #191b22;
-  --wb-sky-fog-day: #1c1d1f;
-  --wb-sky-fog-night: #1a1b1d;
-  --wb-sky-drizzle-day: #14222a;
-  --wb-sky-drizzle-night: #141c28;
-  --wb-sky-rain-day: #11212d;
-  --wb-sky-rain-night: #111a2a;
-  --wb-sky-freezing-rain-day: #122430;
-  --wb-sky-freezing-rain-night: #131d2c;
-  --wb-sky-snow-day: #1c2330;
-  --wb-sky-snow-night: #1b1f2e;
-  --wb-sky-thunderstorm-day: #1c1a2e;
-  --wb-sky-thunderstorm-night: #19172b;
-  --wb-sky-unknown-day: #18191c;
-  --wb-sky-unknown-night: #17181a;
+  --wb-sky-clear-day: #14365f;
+  --wb-sky-clear-night: #101a3d;
+  --wb-sky-partly-cloudy-day: #1c3550;
+  --wb-sky-partly-cloudy-night: #161f3a;
+  --wb-sky-cloudy-day: #283340;
+  --wb-sky-cloudy-night: #1d2430;
+  --wb-sky-fog-day: #38332b;
+  --wb-sky-fog-night: #282520;
+  --wb-sky-drizzle-day: #1e3a3d;
+  --wb-sky-drizzle-night: #16292e;
+  --wb-sky-rain-day: #173a40;
+  --wb-sky-rain-night: #10272f;
+  --wb-sky-freezing-rain-day: #1b3847;
+  --wb-sky-freezing-rain-night: #132836;
+  --wb-sky-snow-day: #283849;
+  --wb-sky-snow-night: #1e2a3d;
+  --wb-sky-thunderstorm-day: #322d4d;
+  --wb-sky-thunderstorm-night: #221d3a;
+  --wb-sky-unknown-day: #26272a;
+  --wb-sky-unknown-night: #1c1d1f;
 }
 
 /* Motion: short and quiet, and gone entirely when the user asks for less. */

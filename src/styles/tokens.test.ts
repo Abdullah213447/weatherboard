@@ -43,7 +43,10 @@ const pairs: [string, string, number][] = [
   ['control', 'canvas', AA_UI],
 ];
 
-const skyKeys = CONDITION_KINDS.flatMap((kind) => [`sky-${kind}-day`, `sky-${kind}-night`]);
+const dayKeys = CONDITION_KINDS.map((kind) => `sky-${kind}-day`);
+const nightKeys = CONDITION_KINDS.map((kind) => `sky-${kind}-night`);
+// Night cards always render in the dark scope, so only the dark theme defines night tints.
+const skyKeys = { light: dayKeys, dark: [...dayKeys, ...nightKeys] };
 
 describe.each(['light', 'dark'] as const)('%s theme tokens', (name) => {
   const palette = themes[name];
@@ -57,13 +60,30 @@ describe.each(['light', 'dark'] as const)('%s theme tokens', (name) => {
     expect(contrastRatio(color(fg), color(bg))).toBeGreaterThanOrEqual(minimum);
   });
 
-  it.each(skyKeys)('%s keeps ink, muted text and the accent readable', (key) => {
+  it.each(skyKeys[name])('%s keeps ink, muted text and the accent readable', (key) => {
     expect(contrastRatio(color('ink'), color(key))).toBeGreaterThanOrEqual(AA_TEXT);
     expect(contrastRatio(color('muted'), color(key))).toBeGreaterThanOrEqual(AA_TEXT);
     expect(contrastRatio(color('accent'), color(key))).toBeGreaterThanOrEqual(AA_TEXT);
   });
 });
 
-it('defines the same tokens in both themes', () => {
-  expect(Object.keys(themes.dark).sort()).toEqual(Object.keys(themes.light).sort());
+it('defines the same tokens in both themes, apart from the dark-only night tints', () => {
+  const withoutNight = (palette: Palette) =>
+    Object.keys(palette)
+      .filter((token) => !nightKeys.includes(token))
+      .sort();
+  expect(withoutNight(themes.dark)).toEqual(withoutNight(themes.light));
+  expect(Object.keys(themes.light).filter((token) => nightKeys.includes(token))).toEqual([]);
+});
+
+it('keeps fog, cloudy and unknown visibly different from each other', () => {
+  // Hue is what separates them, so compare the spread between red and blue channels.
+  const warmth = (hex: string) => parseInt(hex.slice(1, 3), 16) - parseInt(hex.slice(5, 7), 16);
+  for (const palette of [themes.light, themes.dark]) {
+    const fog = warmth(palette['sky-fog-day'] ?? '');
+    const cloudy = warmth(palette['sky-cloudy-day'] ?? '');
+    const unknown = warmth(palette['sky-unknown-day'] ?? '');
+    expect(fog).toBeGreaterThan(unknown + 8); // fog is warm
+    expect(cloudy).toBeLessThan(unknown - 8); // cloudy is cool
+  }
 });
