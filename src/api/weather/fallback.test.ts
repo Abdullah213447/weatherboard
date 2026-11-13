@@ -2,6 +2,7 @@ import {
   CIRCUIT_OPEN_MS,
   CLOSED_CIRCUIT,
   decideAfterPrimary,
+  OPEN_FOR_SESSION,
   shouldTryPrimary,
   type CircuitState,
 } from './fallback';
@@ -26,12 +27,17 @@ describe('decideAfterPrimary', () => {
     expect(CIRCUIT_OPEN_MS).toBe(600_000);
   });
 
-  it('row 3: a rejected key falls back and warns the developer, not the user', () => {
+  it('row 3: a rejected key falls back, warns the developer and opens the circuit for the session', () => {
     const decision = decideAfterPrimary({ ok: false, kind: 'auth' }, CLOSED_CIRCUIT, NOW);
 
     expect(decision.action).toBe('fallback');
-    expect(decision.circuit).toEqual(CLOSED_CIRCUIT);
+    expect(decision.circuit).toEqual({ consecutiveFailures: 0, openUntil: OPEN_FOR_SESSION });
     expect(decision.developerWarning).toMatch(/OpenWeatherMap rejected the API key/);
+    // Not after 10 minutes, not after a year.
+    expect(shouldTryPrimary(decision.circuit, NOW + CIRCUIT_OPEN_MS)).toBe(false);
+    expect(shouldTryPrimary(decision.circuit, NOW + 365 * 24 * 60 * 60 * 1000)).toBe(false);
+    // And it survives being written to sessionStorage.
+    expect(JSON.parse(JSON.stringify(decision.circuit))).toEqual(decision.circuit);
   });
 
   it.each(['provider-down', 'timeout', 'bad-response'] as const)(

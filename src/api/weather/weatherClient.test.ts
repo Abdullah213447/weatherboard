@@ -111,6 +111,21 @@ describe('createWeatherClient', () => {
     expect(warn).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('rejected the API key'));
   });
 
+  it('stops asking OpenWeatherMap for the rest of the session after a rejected key', async () => {
+    const { client, clock, warn, primaryFetch } = setup(
+      failing('openweathermap', 'auth'),
+      workingFallback,
+    );
+
+    await client(karachi);
+    clock.now += CIRCUIT_OPEN_MS * 100;
+    const snapshot = await client(karachi);
+
+    expect(snapshot.provider).toBe('open-meteo');
+    expect(primaryFetch).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
   it('reports one "weather is down" error when both providers fail', async () => {
     const { client } = setup(
       failing('openweathermap', 'provider-down'),

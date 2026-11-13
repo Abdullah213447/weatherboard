@@ -16,6 +16,11 @@ export type CircuitState = {
 export const CLOSED_CIRCUIT: CircuitState = { consecutiveFailures: 0, openUntil: null };
 export const CIRCUIT_OPEN_MS = 10 * 60 * 1000;
 export const FAILURE_THRESHOLD = 2;
+/**
+ * "Never reopen". The circuit lives in sessionStorage, so this lasts for the
+ * browsing session. A finite number, because JSON cannot store Infinity.
+ */
+export const OPEN_FOR_SESSION = Number.MAX_SAFE_INTEGER;
 
 /** What the primary provider did, as far as the policy cares. */
 export type PrimaryOutcome = { ok: true } | { ok: false; kind: AppErrorKind };
@@ -57,11 +62,13 @@ export function decideAfterPrimary(
         circuit: { consecutiveFailures: 0, openUntil: now + CIRCUIT_OPEN_MS },
       };
 
-    // A rejected key is ours to fix. The user still gets weather from the fallback.
+    // A rejected key is ours to fix and will not start working mid-session, so
+    // OpenWeatherMap is skipped until the session ends. The user still gets
+    // weather from the fallback and never sees this.
     case 'auth':
       return {
         action: 'fallback',
-        circuit,
+        circuit: { consecutiveFailures: 0, openUntil: OPEN_FOR_SESSION },
         developerWarning:
           'OpenWeatherMap rejected the API key (new keys can take a while to activate). Using Open-Meteo instead.',
       };
