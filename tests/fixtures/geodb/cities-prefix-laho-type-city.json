@@ -1,0 +1,109 @@
+{
+  "links": [
+    {
+      "rel": "first",
+      "href": "/v1/geo/cities?offset=0&limit=6&namePrefix=Laho&sort=-population&types=CITY"
+    },
+    {
+      "rel": "next",
+      "href": "/v1/geo/cities?offset=6&limit=6&namePrefix=Laho&sort=-population&types=CITY"
+    },
+    {
+      "rel": "last",
+      "href": "/v1/geo/cities?offset=18&limit=6&namePrefix=Laho&sort=-population&types=CITY"
+    }
+  ],
+  "data": [
+    {
+      "id": 12484,
+      "wikiDataId": "Q1102140",
+      "type": "CITY",
+      "city": "Grand-Lahou",
+      "name": "Grand-Lahou",
+      "country": "Ivory Coast",
+      "countryCode": "CI",
+      "region": "Lagunes District",
+      "regionCode": "LG",
+      "regionWdId": "Q20980365",
+      "latitude": 5.133333333,
+      "longitude": -5.016666666,
+      "population": 77479
+    },
+    {
+      "id": 10924,
+      "wikiDataId": "Q200968",
+      "type": "CITY",
+      "city": "Lahojsk",
+      "name": "Lahojsk",
+      "country": "Belarus",
+      "countryCode": "BY",
+      "region": "Minsk Region",
+      "regionCode": "MI",
+      "regionWdId": "Q192959",
+      "latitude": 54.2,
+      "longitude": 27.85,
+      "population": 15543
+    },
+    {
+      "id": 2982524,
+      "wikiDataId": "Q6473439",
+      "type": "CITY",
+      "city": "Lahouaza",
+      "name": "Lahouaza",
+      "country": "Morocco",
+      "countryCode": "MA",
+      "region": "Casablanca-Settat",
+      "regionCode": "06",
+      "regionWdId": "Q19843788",
+      "latitude": 32.913888888,
+      "longitude": -7.701944444,
+      "population": 7018
+    },
+    {
+      "id": 3100622,
+      "wikiDataId": "Q503050",
+      "type": "CITY",
+      "city": "Laholm",
+      "name": "Laholm",
+      "country": "Sweden",
+      "countryCode": "SE",
+      "region": "Halland County",
+      "regionCode": "N",
+      "regionWdId": "Q103691",
+      "latitude": 56.50406475,
+      "longitude": 13.03908341,
+      "population": 6861
+    },
+    {
+      "id": 3894738,
+      "wikiDataId": "Q35710457",
+      "type": "CITY",
+      "city": "Lahonce",
+      "name": "Lahonce",
+      "country": "France",
+      "countryCode": "FR",
+      "region": "Nouvelle-Aquitaine",
+      "regionCode": "NAQ",
+      "regionWdId": "Q18678082",
+      "latitude": 43.4825,
+      "longitude": -1.391111111,
+      "population": 2046
+    },
+    {
+      "id": 3894672,
+      "wikiDataId": "Q35710481",
+      "type": "CITY",
+      "city": "Lahourcade",
+      "name": "Lahourcade",
+      "country": "France",
+      "countryCode": "FR",
+      "region": "Nouvelle-Aquitaine",
+      "regionCode": "NAQ",
+      "regionWdId": "Q18678082",
+      "latitude": 43.35,
+      "longitude": -0.616666666,
+      "population": 704
+    }
+  ],
+  "metadata": { "currentOffset": 0, "totalCount": 21 }
+}
