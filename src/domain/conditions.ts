@@ -1,4 +1,4 @@
-import type { ConditionKind } from './weather';
+import type { ConditionKind } from './weather.js';
 
 /**
  * OpenWeatherMap condition ids: https://openweathermap.org/weather-conditions

@@ -7,7 +7,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'dev-dist'] },
+  { ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'dev-dist', '.vercel'] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
@@ -31,6 +31,11 @@ export default tseslint.config(
       jsxA11y.flatConfigs.strict,
     ],
     languageOptions: { globals: globals.browser },
+  },
+  {
+    // Server functions and their tests run in Node.
+    files: ['api/**/*.ts'],
+    languageOptions: { globals: globals.node },
   },
   {
     // The domain layer is pure: no React, no network, no browser globals.

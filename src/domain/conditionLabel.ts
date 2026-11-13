@@ -1,4 +1,4 @@
-import type { Condition, ConditionKind } from './weather';
+import type { Condition, ConditionKind } from './weather.js';
 
 const LABELS: Record<ConditionKind, string> = {
   clear: 'Clear',

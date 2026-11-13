@@ -1,4 +1,4 @@
-import type { City, Coordinates } from './weather';
+import type { City, Coordinates } from './weather.js';
 
 /** A search hit before clean-up, with what the provider said it is. */
 export type CityCandidate = {
