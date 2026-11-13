@@ -14,12 +14,14 @@ type ConfirmDialogProps = {
   /** Styles the confirm button as a destructive action. */
   destructive?: boolean;
   onConfirm: () => void;
+  /** Overrides where focus goes after closing. By default it returns to what opened the dialog. */
+  onCloseAutoFocus?: (event: Event) => void;
 };
 
 /**
  * A modal question with two answers. Focus starts on Cancel, so a stray
  * Enter never confirms; Escape and the backdrop both cancel; focus returns
- * to the control that opened it.
+ * to the control that opened it, unless the caller sends it elsewhere.
  */
 export function ConfirmDialog({
   open,
@@ -30,8 +32,11 @@ export function ConfirmDialog({
   cancelLabel = 'Cancel',
   destructive = false,
   onConfirm,
+  onCloseAutoFocus,
 }: ConfirmDialogProps) {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  /** Whatever had focus when the dialog opened, so it can be given back. */
+  const openerRef = useRef<HTMLElement | null>(null);
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -40,8 +45,19 @@ export function ConfirmDialog({
         <Dialog.Content
           role="alertdialog"
           onOpenAutoFocus={(event) => {
+            // Focus has not moved yet: this is still the control that opened the dialog.
+            openerRef.current =
+              document.activeElement instanceof HTMLElement ? document.activeElement : null;
             event.preventDefault();
             cancelRef.current?.focus();
+          }}
+          onCloseAutoFocus={(event) => {
+            onCloseAutoFocus?.(event);
+            if (event.defaultPrevented) return;
+            // The dialog is opened from state, not from a trigger element, so
+            // returning focus is done here rather than left to the library.
+            event.preventDefault();
+            if (openerRef.current?.isConnected) openerRef.current.focus();
           }}
           className="border-line-strong bg-raised text-ink shadow-raised animate-fade-in fixed top-1/2 left-1/2 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border p-5"
         >
