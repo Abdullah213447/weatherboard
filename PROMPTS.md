@@ -114,3 +114,18 @@ Report the repo URL, the live URL, the CI status and the GeoDB finding. Log this
 ```
 
 **Outcome:** Partly done. Commit identity was rewritten to the GitHub noreply address, the private repo was created, the Vercel project was linked with both keys set, and the placeholder is live in production with the fallback and 404 behaviour verified. Three things stayed blocked on account permissions the agent could not grant itself: the push (the GitHub token lacks the `workflow` scope, so CI has not run), the Vercel to GitHub connection, and GeoDB, which still answers 403 "not subscribed" with the correct host, pointing to a key from a different RapidAPI app than the one holding the subscription.
+
+## Prompt 5 — Finish the setup
+
+```text
+Done on my side: workflow scope granted via gh auth refresh, Vercel's GitHub app now has access to weatherboard, and I've subscribed to the GeoDB Cities Basic plan (it now shows as Active under Subscriptions & Usage, on the same app as the key in .env.local).
+
+Finish the setup:
+1. Push main and watch the CI run until it passes. If it fails, resolve it and push again.
+2. Connect the Vercel project to the GitHub repo, confirm a push to main triggers a production deploy, and check the live URL.
+3. Retry GeoDB. On 200, read the rate-limit headers and record the confirmed per-second and daily limits in the plan's Decisions. Record one real response as a trimmed fixture for later tests.
+
+Report CI status, the deploy trigger confirmation and the GeoDB limits. Log this prompt in PROMPTS.md, commit and push.
+```
+
+**Outcome:** `main` was pushed and CI passed. GeoDB now returns 200: 1,000 requests/day from the headers, and 1 request/second observed by firing three at once, with about 600 ms per call. Recording fixtures exposed that the city-type filter drops Lahore, which GeoDB stores as an administrative area, so the planned request must change. Vercel still refused the GitHub connection, so the push-to-deploy trigger is not confirmed and production is deployed from the CLI.
