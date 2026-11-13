@@ -131,11 +131,12 @@ describe('mapOpenWeatherMap with recorded responses', () => {
   });
 
   it('leaves a dry city on its noon reading', () => {
+    // 17 Nov: the 11:00 reading is "few clouds" (801); every other day is clear at 11:00.
     expect(karachi.daily.map((day) => day.condition.kind)).toEqual([
       'clear',
       'clear',
       'clear',
-      'clear',
+      'partly-cloudy',
       'clear',
     ]);
   });
