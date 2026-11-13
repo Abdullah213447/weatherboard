@@ -265,3 +265,47 @@ Done when `npm run check` and e2e pass. Logical commits, log this prompt, push, 
 ```
 
 **Outcome:** The threshold, preconnect and instant recent cities landed first; measured, recent cities appear in about 20 ms while preconnect made no measurable difference, and the plan says so. The weather display followed: the sky-tinted card, a five-day list on one shared scale, the app's own animated icon set, every loading and error state, and units that convert without a request. Two things the tests caught along the way: the new locale default made every test run in Fahrenheit until the test locale was pinned, and the storage wrapper could let a stale in-memory value override storage that had been cleared.
+
+## Prompt 10 — Review changes, then favourites
+
+```text
+Review decisions:
+- Today as rain while it's raining at the reading: accepted.
+- 17 Nov in Honolulu: change it. If a shower is too light to count under the threshold, it shouldn't label the day through the noon-nearest rule either. When the noon-nearest slot is sub-threshold precipitation, label the day from that slot's cloud cover, using the same bands as the OWM 800–804 mapping. Check whether the Open-Meteo adapter needs the equivalent so both providers label the same day the same way; verify against its docs rather than guessing, and if it isn't cheap, leave it and record the difference in the plan.
+- Settings menu: change it. Nobody should have to open a menu to find the unit switch, and a bare "26°" needs its unit in view. Put a compact °C | °F control on the conditions card beside the temperature, at every width. The header button becomes the theme control only (light / dark / system).
+- Single-colour icons, two-line forecast rows, the 20% rule and the locale clock format: accepted.
+- Card arrival: let the tint and content fade in over the motion token when data replaces the skeleton, off under reduced motion, with layout shift still under 0.01.
+- Search field: make both paths consistent. It's a command input, so it clears after a selection and stays empty when the app opens on a city; the card carries the state. Reset the field's validation state on selection so no error shows on blur, and dismiss the on-screen keyboard on touch devices so the weather is visible.
+- Add the full icon set to ?preview=ui (every ConditionKind, day and night, both themes) and review each one. Add a fake-timer test for the clock tick.
+Commit these as their own commits.
+
+Then build favourites (requirement 04).
+
+Store:
+- Up to 5 cities, keyed by the existing city id, no duplicates, kept in the order added. Versioned shape, validated with Zod on read: corrupt data, an old version, duplicates or more than 5 entries are cleaned up safely and never crash the app.
+- Persisted through safeStorage with cross-tab sync. Whenage is unavailable or a write fails (quota), favourites keep working in memory for the session and the existing storage notice explains they won't be kept.
+
+Star control on the conditions card:
+- Saves the current city and announces it through the live region ("Lahore saved. 3 of 5 favourites.").
+- On a saved city it shows as pressed (aria-pressed), and activating it asks for confirmation like any other removal.
+- At the limit it stays focusable (aria-disabled, not disabled) with the reason visible and linked via aria-describedby: "You've saved 5 of 5 cities. Remove one to add another." Never a silent no-op.
+
+Quick-access panel:
+- Header with the count ("3 of 5"). Each row: city, region and country, a small condition icon and the current temperature in the chosen unit, and a remove button labelled with the city name. The row for the city on screen is marked with aria-current.
+- Temperatures come from the same weather query the card uses, so choosing a favourite renders instantly from cache. Per row: a skeleton while loading, a dash with accessible text if it can't load or the device is offline. A row never shows an error banner and never blocks the list.
+- Long names truncate cleanly (test with something like "Thiruvananthapuram"), with the full name available to assistive tech.
+- Empty state in the same voice as the first-run screen: one sentence that says how to add a city.
+- Favourites also appear in the instant search suggestions, labelled "Favourite", ahead of recent cities.
+
+Removal:
+- Always confirmed in ConfirmDialog, naming the city ("Remove Lahore from favourites?"), with initial focus on the safe action and Escape cancelling.
+- After removal, focus moves to the next row, or to the panel heading when the list is empty. Cancel returns focus to the control that opened the dialog. Announce the result.
+
+Placement at 375: the panel can't sit below the forecast, because that isn't quick access. Constraints: reachable from the top of the page, the current temperature still visible without scrolling on a 375x667 viewport with 5 favourites saved, no inner horizontal scroller, and removal still possible with 44px targets. At 768 and 1280 it's the secondary-column panel. Propose the arrangement that meets these and tell me what you chose and why.
+
+Tests: store (cap, duplicates, corrupt JSON, wrong version, more than 5 entries, storage throwing on read and on write, cross-tab update); components (save, limit message, confirm and cancel from both the star and the panel, focus after each, aria-current, row loading and failure); e2e at 375 and 1280 (save from the card, appears in the panel, survives reload, remove with confirmation, sixth city refused with the message, no horizontal scroll with 5 long-named favourites).
+
+Done when `npm run check` and e2e pass. Logical commits, log this prompt, push, confirm CI and deploy are green.
+```
+
+**Outcome:** The review changes landed as separate commits: the unit switch moved onto the card, the card now arrives in place with a fade, the search field clears after use, and every icon was reviewed in the preview, which showed that cloudy and partly cloudy were the same drawing (a test had passed only because generated ids differed). Favourites followed with a versioned, self-cleaning store, a star that never fails silently, and a panel folded to one row on phones so the temperature stays on the first screen. The tests found three real defects on the way: the confirm dialog did not return focus to what opened it, re-saving a stored city reordered its fields, and one long city name widened the page by 47px.
