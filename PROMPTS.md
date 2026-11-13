@@ -96,3 +96,21 @@ geodb api key: [redacted]
 ```
 
 **Outcome:** `CLAUDE.md`, the scaffold, CI and `vercel.json` landed as four commits; `npm run check` and `npm run build` pass. The agent pinned ESLint to v9 after a peer-dependency conflict with the accessibility plugin, fixed an option renamed in MSW 3, and added lint rules that enforce domain purity. A live test of the GeoDB key returned 403 "not subscribed", so the RapidAPI subscription still has to be activated.
+
+## Prompt 4 — Accounts, identity, repo and first deploy
+
+```text
+Before any feature work, handle the setup end to end yourself:
+
+1. GeoDB: RapidAPI shows I'm subscribed to the Basic plan, yet you got 403. Retry the call and diagnose: check the exact X-RapidAPI-Host value, whether the key in .env.local belongs to the same RapidAPI app that holds the subscription, and whether it's just propagation delay. Once it returns 200, read the rate-limit headers and update the plan's Decisions with the confirmed per-second and daily limits. If it still fails, tell me exactly what to check on the RapidAPI dashboard.
+
+2. Commit identity: this is a personal project, so it must not use my work email. Set the repo-local git user.email to the personal primary email on my GitHub account (get it with gh api user/emails; if that's not accessible, use my GitHub noreply address from gh api user). Nothing is pushed yet, so rewrite the author and committer on all existing commits to that email, and show me git log with author emails to confirm.
+
+3. GitHub: create a private repo named weatherboard under my account with gh, set it as origin and push main. Confirm the CI run passes; if it fails, resolve it and push again.
+
+4. Vercel: using the Vercel CLI (npx vercel), link this folder to a new project, connect it to the GitHub repo so every push to main deploys to production, and add VITE_OPENWEATHER_API_KEY and VITE_RAPIDAPI_KEY from .env.local for Production and Preview without printing their values. Then deploy to production and confirm the placeholder loads at the live URL. If the CLI needs me to log in, stop and tell me the one command to run.
+
+Report the repo URL, the live URL, the CI status and the GeoDB finding. Log this prompt in PROMPTS.md and commit.
+```
+
+**Outcome:** Partly done. Commit identity was rewritten to the GitHub noreply address, the private repo was created, the Vercel project was linked with both keys set, and the placeholder is live in production with the fallback and 404 behaviour verified. Three things stayed blocked on account permissions the agent could not grant itself: the push (the GitHub token lacks the `workflow` scope, so CI has not run), the Vercel to GitHub connection, and GeoDB, which still answers 403 "not subscribed" with the correct host, pointing to a key from a different RapidAPI app than the one holding the subscription.
