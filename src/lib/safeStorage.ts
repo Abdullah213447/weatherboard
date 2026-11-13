@@ -2,8 +2,8 @@
  * localStorage that never throws.
  *
  * Storage can be missing or blocked (private browsing, cookie settings, a full
- * quota). Every read and write is guarded, and values are mirrored in memory so
- * the app keeps working for the session when nothing can be persisted.
+ * quota). Every read and write is guarded, and a value that cannot be persisted
+ * is held in memory so the app keeps working for the session.
  * `isPersistent` lets the UI tell the user that their choices will not last.
  */
 
@@ -35,30 +35,36 @@ function detect(getBackend: () => Storage): Storage | null {
 
 export function createSafeStorage(getBackend: () => Storage): SafeStorage {
   const backend = detect(getBackend);
+  /** Values that could not be persisted: all of them without a backend, or single failed writes. */
   const memory = new Map<string, string>();
 
   return {
     isPersistent: backend !== null,
 
     get(key) {
+      // A value held in memory means the last write for this key did not reach storage.
+      const unsaved = memory.get(key);
+      if (unsaved !== undefined || !backend) return unsaved ?? null;
       try {
-        const stored = backend?.getItem(key);
-        if (stored !== null && stored !== undefined) return stored;
+        // Storage is the truth, including when it says "nothing": another tab may have cleared it.
+        return backend.getItem(key);
       } catch {
-        // Fall through to the in-memory copy.
+        return null;
       }
-      return memory.get(key) ?? null;
     },
 
     set(key, value) {
-      memory.set(key, value);
-      if (!backend) return false;
-      try {
-        backend.setItem(key, value);
-        return true;
-      } catch {
-        return false;
+      if (backend) {
+        try {
+          backend.setItem(key, value);
+          memory.delete(key);
+          return true;
+        } catch {
+          // Quota exceeded or storage revoked: keep it for this session.
+        }
       }
+      memory.set(key, value);
+      return false;
     },
 
     remove(key) {

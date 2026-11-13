@@ -55,6 +55,17 @@ describe('createSafeStorage', () => {
     expect(storage.get('k')).toBe('v');
   });
 
+  it('trusts storage over memory once a value has been persisted', () => {
+    const backend = workingBackend();
+    const storage = createSafeStorage(() => backend);
+    storage.set('k', 'v');
+
+    // Cleared elsewhere, for example by another tab or by the user.
+    backend.removeItem('k');
+
+    expect(storage.get('k')).toBeNull();
+  });
+
   it('notifies subscribers only for changes to their key from another tab', () => {
     const storage = createSafeStorage(workingBackend);
     const listener = vi.fn();
