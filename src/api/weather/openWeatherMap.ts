@@ -66,9 +66,13 @@ export function mapOpenWeatherMap(
     });
   }
 
+  const { sunrise, sunset } = current.sys ?? {};
+
   return {
     current: currentWeather,
     daily,
+    ...(sunrise !== undefined &&
+      sunset !== undefined && { sun: { sunriseAt: sunrise * 1000, sunsetAt: sunset * 1000 } }),
     utcOffsetSeconds: current.timezone,
     provider: SOURCE,
     fetchedAt: now,

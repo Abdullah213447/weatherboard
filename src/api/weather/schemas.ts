@@ -14,6 +14,7 @@ export const owmCurrentSchema = z.object({
   wind: z.object({ speed: z.number(), deg: z.number().optional() }),
   /** Observation time, epoch seconds. */
   dt: z.number(),
+  sys: z.object({ sunrise: z.number().optional(), sunset: z.number().optional() }).optional(),
   /** Offset from UTC in seconds. */
   timezone: z.number(),
 });
@@ -55,6 +56,8 @@ export const openMeteoSchema = z.object({
     temperature_2m_max: z.array(z.number()),
     temperature_2m_min: z.array(z.number()),
     precipitation_probability_max: z.array(z.number().nullable()).optional(),
+    sunrise: z.array(z.number()).optional(),
+    sunset: z.array(z.number()).optional(),
   }),
 });
 

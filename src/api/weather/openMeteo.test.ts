@@ -12,12 +12,12 @@ describe('mapOpenMeteo with recorded responses', () => {
     const weather = map(karachi);
 
     expect(weather.current).toEqual({
-      observedAt: 1794601800000,
-      temperatureC: 25.6,
-      feelsLikeC: 30.0,
-      humidityPct: 86,
-      windSpeedMs: 1.93,
-      windDirectionDeg: 260,
+      observedAt: 1794605400000,
+      temperatureC: 25.2,
+      feelsLikeC: 29.7,
+      humidityPct: 87,
+      windSpeedMs: 1.81,
+      windDirectionDeg: 276,
       condition: { kind: 'clear', isDay: false },
     });
     expect(weather.utcOffsetSeconds).toBe(18000);
@@ -74,9 +74,15 @@ describe('mapOpenMeteo with recorded responses', () => {
     ]);
   });
 
+  it('reads today\u2019s sunrise and sunset as instants', () => {
+    // 06:47 and 17:45 in Karachi on 14 Nov.
+    expect(map(karachi).sun).toEqual({ sunriseAt: 1794620852000, sunsetAt: 1794660306000 });
+  });
+
   it('marks daytime from the is_day flag', () => {
     expect(map(honolulu).current.condition).toEqual({ kind: 'drizzle', isDay: true });
-    expect(map(tokyo).current.condition.isDay).toBe(false);
+    expect(map(tokyo).current.condition.isDay).toBe(true);
+    expect(map(karachi).current.condition.isDay).toBe(false);
   });
 });
 
@@ -99,6 +105,7 @@ describe('createOpenMeteoProvider', () => {
     expect(params.get('forecast_days')).toBe('5');
     expect(params.get('wind_speed_unit')).toBe('ms');
     expect(params.get('timeformat')).toBe('unixtime');
+    expect(params.get('daily')).toContain('sunrise,sunset');
   });
 
   it('rejects an error body that arrives with a success status as a bad response', async () => {

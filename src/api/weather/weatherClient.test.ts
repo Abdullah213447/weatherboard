@@ -83,7 +83,7 @@ describe('createWeatherClient', () => {
     const snapshot = await client(karachi);
 
     expect(snapshot.provider).toBe('open-meteo');
-    expect(snapshot.current.temperatureC).toBe(25.6);
+    expect(snapshot.current.temperatureC).toBe(25.2);
   });
 
   it('does not try the fallback when the device is offline', async () => {

@@ -65,6 +65,7 @@ describe('mapOpenWeatherMap with recorded responses', () => {
       condition: { kind: 'fog', isDay: false },
     });
     expect(karachi.utcOffsetSeconds).toBe(18000);
+    expect(karachi.sun).toEqual({ sunriseAt: 1794620852000, sunsetAt: 1794660325000 });
     expect(karachi.provider).toBe('openweathermap');
   });
 

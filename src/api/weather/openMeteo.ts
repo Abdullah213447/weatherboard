@@ -24,6 +24,8 @@ const DAILY_FIELDS = [
   'temperature_2m_max',
   'temperature_2m_min',
   'precipitation_probability_max',
+  'sunrise',
+  'sunset',
 ].join(',');
 
 /** Pure mapping from an Open-Meteo body to the normalized model. */
@@ -54,6 +56,9 @@ export function mapOpenMeteo(body: OpenMeteoForecast, now: number): ProviderWeat
     });
   }
 
+  const sunrise = daily.sunrise?.[0];
+  const sunset = daily.sunset?.[0];
+
   return {
     current: {
       observedAt: current.time * 1000,
@@ -67,6 +72,8 @@ export function mapOpenMeteo(body: OpenMeteoForecast, now: number): ProviderWeat
       condition: { kind: conditionFromWmo(current.weather_code), isDay: current.is_day === 1 },
     },
     daily: days,
+    ...(sunrise !== undefined &&
+      sunset !== undefined && { sun: { sunriseAt: sunrise * 1000, sunsetAt: sunset * 1000 } }),
     utcOffsetSeconds,
     provider: SOURCE,
     fetchedAt: now,

@@ -64,6 +64,8 @@ export type WeatherSnapshot = {
   current: CurrentWeather;
   /** Exactly five days, today first. */
   daily: DailyForecast[];
+  /** Today's sunrise and sunset as instants. Absent where the sun does not rise or set. */
+  sun?: { sunriseAt: number; sunsetAt: number };
   utcOffsetSeconds: number;
   provider: ProviderId;
   /** Epoch milliseconds. */

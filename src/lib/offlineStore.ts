@@ -44,6 +44,7 @@ const snapshotSchema = z.object({
       partial: z.boolean(),
     }),
   ),
+  sun: z.object({ sunriseAt: z.number(), sunsetAt: z.number() }).optional(),
   utcOffsetSeconds: z.number(),
   provider: z.enum(['openweathermap', 'open-meteo']),
   fetchedAt: z.number(),
