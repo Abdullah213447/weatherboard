@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+/// <reference types="vite-plugin-pwa/client" />
 
 /* eslint-disable @typescript-eslint/consistent-type-definitions --
    Vite's env typing works by declaration merging, which only interfaces support. */

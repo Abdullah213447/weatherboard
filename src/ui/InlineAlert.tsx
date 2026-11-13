@@ -4,6 +4,7 @@ import { cx } from './cx';
 import { Icon } from './Icon';
 
 type Tone = 'info' | 'success' | 'warning' | 'danger';
+type Action = { label: string; onClick: () => void };
 
 type InlineAlertProps = {
   tone?: Tone;
@@ -11,7 +12,9 @@ type InlineAlertProps = {
   title: string;
   /** What it means and what the user can do about it. */
   children: ReactNode;
-  action?: { label: string; onClick: () => void };
+  action?: Action;
+  /** A second, quieter choice, such as "Later". */
+  secondaryAction?: Action;
   className?: string;
 };
 
@@ -32,6 +35,7 @@ export function InlineAlert({
   title,
   children,
   action,
+  secondaryAction,
   className,
 }: InlineAlertProps) {
   const urgent = tone === 'danger' || tone === 'warning';
@@ -44,10 +48,19 @@ export function InlineAlert({
       <div className="min-w-0 flex-1">
         <p className="text-ink text-sm font-medium">{title}</p>
         <div className="text-muted text-sm">{children}</div>
-        {action && (
-          <Button size="sm" className="mt-3" onClick={action.onClick}>
-            {action.label}
-          </Button>
+        {(action ?? secondaryAction) && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {action && (
+              <Button size="sm" onClick={action.onClick}>
+                {action.label}
+              </Button>
+            )}
+            {secondaryAction && (
+              <Button size="sm" variant="ghost" onClick={secondaryAction.onClick}>
+                {secondaryAction.label}
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -3,6 +3,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
 import { App } from '@/App';
 import { createQueryClient } from '@/app/queryClient';
+import { install } from '@/features/pwa/installStore';
+import { pwa } from '@/features/pwa/pwaStore';
 import '@/styles/index.css';
 
 const container = document.getElementById('root');
@@ -20,6 +22,11 @@ async function resolveView(): Promise<ReactNode> {
   }
   return <App />;
 }
+
+// Registers the service worker (production builds only) and starts listening
+// for the browser's install signals.
+pwa.start();
+install.start();
 
 const root = createRoot(container);
 const queryClient = createQueryClient();
