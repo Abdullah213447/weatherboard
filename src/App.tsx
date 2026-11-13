@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { AppShell } from '@/app/AppShell';
 import { DashboardGrid } from '@/app/DashboardGrid';
 import { Panel } from '@/app/Panel';
@@ -12,6 +12,9 @@ import { install } from '@/features/pwa/installStore';
 import { noticeToShow } from '@/features/pwa/noticeOrder';
 import { OfflineReadyToast, UpdateNotice } from '@/features/pwa/PwaNotices';
 import { pwa } from '@/features/pwa/pwaStore';
+import { useUnits } from '@/features/prefs/units';
+import { ReminderCard } from '@/features/reminders/ReminderCard';
+import { reminders } from '@/features/reminders/reminders';
 import { CitySearch, type CitySearchHandle, type KnownCity } from '@/features/search/CitySearch';
 import { FirstRunEmptyState } from '@/features/weather/FirstRunEmptyState';
 import { useWeatherView } from '@/features/weather/useWeatherView';
@@ -39,6 +42,13 @@ export function App() {
     cityLoaded,
   });
   const searchRef = useRef<CitySearchHandle>(null);
+  const units = useUnits();
+
+  // On open, and whenever the unit changes: bring the reminder card in line
+  // with the browser's permission and subscription, and renew the server's copy.
+  useEffect(() => {
+    void reminders.reconcile({ unit: units });
+  }, [units]);
   const recent = useRecentCities();
   const favourites = useFavourites();
   // Offered by search before any request returns: favourites first, then other recent cities.
@@ -103,12 +113,13 @@ export function App() {
         quick={<FavouritesPanel currentCityId={city?.id ?? null} onSelect={selectCity} />}
         secondary={
           <>
-            <Panel title="Daily reminder">
-              <p className="text-sm">Not set up yet.</p>
-              <p className="text-muted text-sm">
-                A morning notification at a time you choose, even with the app closed.
-              </p>
-            </Panel>
+            <ReminderCard
+              controller={reminders}
+              city={city}
+              favourites={favourites.cities}
+              unit={units}
+              online={online}
+            />
           </>
         }
       />

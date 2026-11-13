@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import { Button } from '@/ui/Button';
 import { IconButton } from '@/ui/IconButton';
+import { AddToHomeScreenSteps } from './AddToHomeScreenSteps';
 import { install } from './installStore';
 
 /**
@@ -49,17 +50,7 @@ export function InstallPrompt() {
           </Button>
         </>
       ) : (
-        <ol className="text-muted list-decimal space-y-1 pl-5 text-sm">
-          <li>
-            Tap <span className="text-ink font-medium">Share</span> in Safari&rsquo;s toolbar.
-          </li>
-          <li>
-            Choose <span className="text-ink font-medium">Add to Home Screen</span>.
-          </li>
-          <li>
-            Tap <span className="text-ink font-medium">Add</span>.
-          </li>
-        </ol>
+        <AddToHomeScreenSteps />
       )}
     </aside>
   );
