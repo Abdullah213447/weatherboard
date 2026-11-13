@@ -5,8 +5,8 @@ type AppShellProps = {
   search: ReactNode;
   /** Small indicators such as data freshness or connection state. */
   status?: ReactNode;
-  /** The theme button. */
-  settings: ReactNode;
+  /** Buttons for the top corner: refresh and theme. */
+  actions: ReactNode;
   /** Page-level notices: offline mode, storage unavailable. */
   banner?: ReactNode;
   children: ReactNode;
@@ -18,9 +18,11 @@ const linkClass =
   'text-muted hover:text-ink underline underline-offset-2 inline-flex min-h-11 items-center compact:inline compact:min-h-0';
 
 /** Page frame: header with slots, a banner row, the main area and the attribution footer. */
-export function AppShell({ search, status, settings, banner, children }: AppShellProps) {
+export function AppShell({ search, status, actions, banner, children }: AppShellProps) {
   return (
-    <div className="bg-canvas text-ink flex min-h-dvh flex-col">
+    // Installed, the app draws under the notch and home indicator (viewport-fit=cover),
+    // so it pads itself by the safe-area insets. They are zero in a browser tab.
+    <div className="bg-canvas text-ink flex min-h-dvh flex-col pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
       <a
         href="#main"
         className="bg-accent text-on-accent sr-only rounded-md text-sm font-medium focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-10 focus:px-4 focus:py-3"
@@ -28,7 +30,7 @@ export function AppShell({ search, status, settings, banner, children }: AppShel
         Skip to content
       </a>
 
-      <header className="border-line bg-surface border-b">
+      <header className="border-line bg-surface border-b pt-[env(safe-area-inset-top)]">
         <div
           className={`${container} grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 py-3 md:grid-cols-[auto_minmax(0,1fr)_auto_auto] md:gap-x-6`}
         >
@@ -45,19 +47,21 @@ export function AppShell({ search, status, settings, banner, children }: AppShel
               {status}
             </div>
           )}
-          <div className="col-start-2 row-start-1 justify-self-end md:col-start-4">{settings}</div>
+          <div className="col-start-2 row-start-1 flex items-center gap-2 justify-self-end md:col-start-4">
+            {actions}
+          </div>
         </div>
       </header>
 
       {banner !== undefined && banner !== null && banner !== false && (
-        <div className={`${container} flex flex-col gap-2 pt-4`}>{banner}</div>
+        <div className={`${container} flex flex-col gap-2 pt-4 empty:hidden`}>{banner}</div>
       )}
 
       <main id="main" tabIndex={-1} className={`${container} flex-1 py-4 outline-none md:py-6`}>
         {children}
       </main>
 
-      <footer className="border-line border-t">
+      <footer className="border-line border-t pb-[env(safe-area-inset-bottom)]">
         <p className={`${container} text-subtle py-4 text-xs`}>
           Weather data by{' '}
           <a className={linkClass} href="https://open-meteo.com/" target="_blank" rel="noreferrer">

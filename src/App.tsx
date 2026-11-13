@@ -7,17 +7,22 @@ import { FavouritesPanel } from '@/features/favourites/FavouritesPanel';
 import { useFavourites } from '@/features/favourites/favouritesStore';
 import { selectCity, useSelectedCity } from '@/features/city/selectedCity';
 import { ThemeMenu } from '@/features/prefs/ThemeMenu';
+import { InstallPrompt } from '@/features/pwa/InstallPrompt';
+import { OfflineReadyToast, UpdateNotice } from '@/features/pwa/PwaNotices';
 import { CitySearch, type CitySearchHandle, type KnownCity } from '@/features/search/CitySearch';
 import { FirstRunEmptyState } from '@/features/weather/FirstRunEmptyState';
 import { useWeatherView } from '@/features/weather/useWeatherView';
 import { safeStorage } from '@/lib/safeStorage';
+import { useOnline } from '@/lib/useOnline';
+import { IconButton } from '@/ui/IconButton';
 import { InlineAlert } from '@/ui/InlineAlert';
 import { Announcer } from '@/ui/Announcer';
 import { LiveRegion } from '@/ui/LiveRegion';
 
 export function App() {
   const city = useSelectedCity();
-  const weather = useWeatherView(city);
+  const weather = useWeatherView(city, { onOpenCity: selectCity });
+  const online = useOnline();
   const searchRef = useRef<CitySearchHandle>(null);
   const recent = useRecentCities();
   const favourites = useFavourites();
@@ -36,16 +41,38 @@ export function App() {
     <AppShell
       search={<CitySearch ref={searchRef} onSelect={selectCity} known={known} />}
       status={weather.status}
-      settings={<ThemeMenu />}
+      actions={
+        <>
+          {/* An installed app has no browser reload button, so the app provides its own. */}
+          {weather.refresh && (
+            <IconButton
+              label="Refresh weather"
+              icon="refresh"
+              variant="secondary"
+              disabled={weather.refresh.disabled}
+              onClick={weather.refresh.onClick}
+            />
+          )}
+          <ThemeMenu />
+        </>
+      }
       banner={
-        // Storage is blocked altogether, or the last attempt to save favourites failed.
-        (!safeStorage.isPersistent || !favourites.saved) && (
-          <InlineAlert tone="info" title="Your choices will not be saved in this browser">
-            This browser is not letting the app save, often because of private browsing, a privacy
-            setting or full storage. Everything works, but your favourites and settings reset when
-            you close this tab.
-          </InlineAlert>
-        )
+        <>
+          {(!online || weather.offlineMessage !== null) && (
+            <InlineAlert tone="info" title="Offline mode">
+              {weather.offlineMessage ?? 'Search and new weather need a connection.'}
+            </InlineAlert>
+          )}
+          {/* Storage is blocked altogether, or the last attempt to save favourites failed. */}
+          {(!safeStorage.isPersistent || !favourites.saved) && (
+            <InlineAlert tone="info" title="Your choices will not be saved in this browser">
+              This browser is not letting the app save, often because of private browsing, a privacy
+              setting or full storage. Everything works, but your favourites and settings reset when
+              you close this tab.
+            </InlineAlert>
+          )}
+          <UpdateNotice />
+        </>
       }
     >
       <DashboardGrid
@@ -70,6 +97,8 @@ export function App() {
           </>
         }
       />
+      <InstallPrompt />
+      <OfflineReadyToast />
       <LiveRegion message={weather.announcement} />
       <Announcer />
     </AppShell>
