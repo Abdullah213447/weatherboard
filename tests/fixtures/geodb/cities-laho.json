@@ -1,8 +1,17 @@
 {
   "links": [
-    { "rel": "first", "href": "/v1/geo/cities?offset=0&limit=6&namePrefix=Laho&sort=-population" },
-    { "rel": "next", "href": "/v1/geo/cities?offset=6&limit=6&namePrefix=Laho&sort=-population" },
-    { "rel": "last", "href": "/v1/geo/cities?offset=30&limit=6&namePrefix=Laho&sort=-population" }
+    {
+      "rel": "first",
+      "href": "/v1/geo/cities?offset=0&limit=10&sort=-population&namePrefix=Laho&languageCode=en"
+    },
+    {
+      "rel": "next",
+      "href": "/v1/geo/cities?offset=10&limit=10&sort=-population&namePrefix=Laho&languageCode=en"
+    },
+    {
+      "rel": "last",
+      "href": "/v1/geo/cities?offset=30&limit=10&sort=-population&namePrefix=Laho&languageCode=en"
+    }
   ],
   "data": [
     {
@@ -94,6 +103,66 @@
       "latitude": 56.516666666,
       "longitude": 13.033333333,
       "population": 26480
+    },
+    {
+      "id": 10924,
+      "wikiDataId": "Q200968",
+      "type": "CITY",
+      "city": "Lahojsk",
+      "name": "Lahojsk",
+      "country": "Belarus",
+      "countryCode": "BY",
+      "region": "Minsk Region",
+      "regionCode": "MI",
+      "regionWdId": "Q192959",
+      "latitude": 54.2,
+      "longitude": 27.85,
+      "population": 15543
+    },
+    {
+      "id": 3522712,
+      "wikiDataId": "Q10553372",
+      "type": "ADM2",
+      "city": "Laholms församling",
+      "name": "Laholms församling",
+      "country": "Sweden",
+      "countryCode": "SE",
+      "region": "Halland County",
+      "regionCode": "N",
+      "regionWdId": "Q103691",
+      "latitude": 56.51931,
+      "longitude": 13.05466,
+      "population": 11540
+    },
+    {
+      "id": 2982524,
+      "wikiDataId": "Q6473439",
+      "type": "CITY",
+      "city": "Lahouaza",
+      "name": "Lahouaza",
+      "country": "Morocco",
+      "countryCode": "MA",
+      "region": "Casablanca-Settat",
+      "regionCode": "06",
+      "regionWdId": "Q19843788",
+      "latitude": 32.913888888,
+      "longitude": -7.701944444,
+      "population": 7018
+    },
+    {
+      "id": 3100622,
+      "wikiDataId": "Q503050",
+      "type": "CITY",
+      "city": "Laholm",
+      "name": "Laholm",
+      "country": "Sweden",
+      "countryCode": "SE",
+      "region": "Halland County",
+      "regionCode": "N",
+      "regionWdId": "Q103691",
+      "latitude": 56.50406475,
+      "longitude": 13.03908341,
+      "population": 6861
     }
   ],
   "metadata": { "currentOffset": 0, "totalCount": 31 }

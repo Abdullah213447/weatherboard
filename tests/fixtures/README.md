@@ -4,13 +4,25 @@ Every file here is a response body recorded from the real API. Nothing is hand-w
 
 ## GeoDB Cities (recorded 14 Nov 2026, Basic plan)
 
-| File                                      | Request                                                                  | Status |
-| ----------------------------------------- | ------------------------------------------------------------------------ | ------ |
-| `geodb/cities-prefix-laho.json`           | `GET /v1/geo/cities?namePrefix=Laho&limit=6&sort=-population`            | 200    |
-| `geodb/cities-prefix-laho-type-city.json` | `GET /v1/geo/cities?namePrefix=Laho&limit=6&sort=-population&types=CITY` | 200    |
-| `geodb/rate-limited-429.json`             | Second of three simultaneous requests                                    | 429    |
+All city searches use `GET /v1/geo/cities?namePrefix={prefix}&limit=10&sort=-population&languageCode=en`.
 
-The two `Laho` files differ on purpose: with `types=CITY` Lahore does not appear at all, because GeoDB holds it as an `ADM2` record.
+| File                                      | Prefix                                | Status | Why it is here                                                                            |
+| ----------------------------------------- | ------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
+| `geodb/cities-laho.json`                  | `Laho`                                | 200    | Lahore exists only as "Lahore Division" and "Lahore District"; Laholm appears three times |
+| `geodb/cities-lond.json`                  | `Lond`                                | 200    | "Greater London" outranks London; Londrina appears twice                                  |
+| `geodb/cities-kara.json`                  | `Kara`                                | 200    | "Karaj County" and Karaj are the same place                                               |
+| `geodb/cities-no-results.json`            | `Zzqxv`                               | 200    | An empty result is a 200 with `data: []`                                                  |
+| `geodb/cities-prefix-laho-type-city.json` | `Laho`, with `limit=6&types=CITY`     | 200    | Kept as evidence: with the city filter Lahore is absent                                   |
+| `geodb/rate-limited-429.json`             | Second of three simultaneous requests | 429    | The per-second limit's body                                                               |
+
+## Open-Meteo geocoding (recorded 14 Nov 2026)
+
+`GET https://geocoding-api.open-meteo.com/v1/search?name={name}&count=10&language=en&format=json`
+
+| File                                          | Name    | Status | Why it is here                                     |
+| --------------------------------------------- | ------- | ------ | -------------------------------------------------- |
+| `open-meteo-geocoding/search-laho.json`       | `Laho`  | 200    | The backup search; fuzzy matching, Lahore first    |
+| `open-meteo-geocoding/search-no-results.json` | `Zzqxv` | 200    | No matches: the `results` key is absent, not empty |
 
 ## Weather (recorded 13 Nov 2026, 20:40 UTC)
 

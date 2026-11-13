@@ -1,0 +1,169 @@
+{
+  "links": [
+    {
+      "rel": "first",
+      "href": "/v1/geo/cities?offset=0&limit=10&sort=-population&namePrefix=Kara&languageCode=en"
+    },
+    {
+      "rel": "next",
+      "href": "/v1/geo/cities?offset=10&limit=10&sort=-population&namePrefix=Kara&languageCode=en"
+    },
+    {
+      "rel": "last",
+      "href": "/v1/geo/cities?offset=2660&limit=10&sort=-population&namePrefix=Kara&languageCode=en"
+    }
+  ],
+  "data": [
+    {
+      "id": 92643,
+      "wikiDataId": "Q8660",
+      "type": "CITY",
+      "city": "Karachi",
+      "name": "Karachi",
+      "country": "Pakistan",
+      "countryCode": "PK",
+      "region": "Sindh",
+      "regionCode": "SD",
+      "regionWdId": "Q37211",
+      "latitude": 24.86,
+      "longitude": 67.01,
+      "population": 14910352
+    },
+    {
+      "id": 146996,
+      "wikiDataId": "Q10375",
+      "type": "ADM2",
+      "city": "Karawang",
+      "name": "Karawang",
+      "country": "Indonesia",
+      "countryCode": "ID",
+      "region": "West Java",
+      "regionCode": "JB",
+      "regionWdId": "Q3724",
+      "latitude": -6.3050853,
+      "longitude": 107.3002579,
+      "population": 2267233
+    },
+    {
+      "id": 3502998,
+      "wikiDataId": "Q1264551",
+      "type": "ADM2",
+      "city": "Karaj County",
+      "name": "Karaj County",
+      "country": "Iran",
+      "countryCode": "IR",
+      "region": "Alborz Province",
+      "regionCode": "30",
+      "regionWdId": "Q392522",
+      "latitude": 35.965,
+      "longitude": 51.095,
+      "population": 1973470
+    },
+    {
+      "id": 58549,
+      "wikiDataId": "Q36529",
+      "type": "CITY",
+      "city": "Karaj",
+      "name": "Karaj",
+      "country": "Iran",
+      "countryCode": "IR",
+      "region": "Alborz Province",
+      "regionCode": "30",
+      "regionWdId": "Q392522",
+      "latitude": 35.832777777,
+      "longitude": 50.991666666,
+      "population": 1592492
+    },
+    {
+      "id": 3345723,
+      "wikiDataId": "Q1419668",
+      "type": "ADM2",
+      "city": "Karauli district",
+      "name": "Karauli district",
+      "country": "India",
+      "countryCode": "IN",
+      "region": "Rajasthan",
+      "regionCode": "RJ",
+      "regionWdId": "Q1437",
+      "latitude": 26.5,
+      "longitude": 77.02,
+      "population": 1458248
+    },
+    {
+      "id": 147094,
+      "wikiDataId": "Q10616",
+      "type": "ADM2",
+      "city": "Karanganyar",
+      "name": "Karanganyar",
+      "country": "Indonesia",
+      "countryCode": "ID",
+      "region": "Central Java",
+      "regionCode": "JT",
+      "regionWdId": "Q3557",
+      "latitude": -7.596111111,
+      "longitude": 110.950833333,
+      "population": 861240
+    },
+    {
+      "id": 3208410,
+      "wikiDataId": "Q1114427",
+      "type": "ADM2",
+      "city": "Karak District",
+      "name": "Karak District",
+      "country": "Pakistan",
+      "countryCode": "PK",
+      "region": "Khyber Pakhtunkhwa",
+      "regionCode": "KP",
+      "regionWdId": "Q183314",
+      "latitude": 33.133333333,
+      "longitude": 71.083333333,
+      "population": 815878
+    },
+    {
+      "id": 3721776,
+      "wikiDataId": "Q1207811",
+      "type": "ADM2",
+      "city": "Karakax County",
+      "name": "Karakax County",
+      "country": "People's Republic of China",
+      "countryCode": "CN",
+      "region": "Xinjiang",
+      "regionCode": "XJ",
+      "regionWdId": "Q34800",
+      "latitude": 37.27246,
+      "longitude": 79.73438,
+      "population": 571648
+    },
+    {
+      "id": 147131,
+      "wikiDataId": "Q11501",
+      "type": "ADM2",
+      "city": "Karangasem",
+      "name": "Karangasem",
+      "country": "Indonesia",
+      "countryCode": "ID",
+      "region": "Bali",
+      "regionCode": "BA",
+      "regionWdId": "Q3125978",
+      "latitude": -8.36666667,
+      "longitude": 115.51666667,
+      "population": 539314
+    },
+    {
+      "id": 70264,
+      "wikiDataId": "Q484706",
+      "type": "CITY",
+      "city": "Karaganda",
+      "name": "Karaganda",
+      "country": "Kazakhstan",
+      "countryCode": "KZ",
+      "region": "Karaganda Region",
+      "regionCode": "35",
+      "regionWdId": "Q485429",
+      "latitude": 49.8,
+      "longitude": 73.116666666,
+      "population": 515632
+    }
+  ],
+  "metadata": { "currentOffset": 0, "totalCount": 2666 }
+}

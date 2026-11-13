@@ -1,0 +1,169 @@
+{
+  "links": [
+    {
+      "rel": "first",
+      "href": "/v1/geo/cities?offset=0&limit=10&languageCode=en&namePrefix=Lond&sort=-population"
+    },
+    {
+      "rel": "next",
+      "href": "/v1/geo/cities?offset=10&limit=10&languageCode=en&namePrefix=Lond&sort=-population"
+    },
+    {
+      "rel": "last",
+      "href": "/v1/geo/cities?offset=110&limit=10&languageCode=en&namePrefix=Lond&sort=-population"
+    }
+  ],
+  "data": [
+    {
+      "id": 3602356,
+      "wikiDataId": "Q23306",
+      "type": "CITY",
+      "city": "Greater London",
+      "name": "Greater London",
+      "country": "United Kingdom",
+      "countryCode": "GB",
+      "region": "England",
+      "regionCode": "ENG",
+      "regionWdId": "Q21",
+      "latitude": 51.52,
+      "longitude": -0.1,
+      "population": 8866180
+    },
+    {
+      "id": 45633,
+      "wikiDataId": "Q84",
+      "type": "CITY",
+      "city": "London",
+      "name": "London",
+      "country": "United Kingdom",
+      "countryCode": "GB",
+      "region": "England",
+      "regionCode": "ENG",
+      "regionWdId": "Q21",
+      "latitude": 51.507222222,
+      "longitude": -0.1275,
+      "population": 8799728
+    },
+    {
+      "id": 9071,
+      "wikiDataId": "Q22064171",
+      "type": "CITY",
+      "city": "Londrina",
+      "name": "Londrina",
+      "country": "Brazil",
+      "countryCode": "BR",
+      "region": "Paraná",
+      "regionCode": "PR",
+      "regionWdId": "Q15499",
+      "latitude": -23.31028,
+      "longitude": -51.16278,
+      "population": 588125
+    },
+    {
+      "id": 3692717,
+      "wikiDataId": "Q192387",
+      "type": "CITY",
+      "city": "Londrina",
+      "name": "Londrina",
+      "country": "Brazil",
+      "countryCode": "BR",
+      "region": "Paraná",
+      "regionCode": "PR",
+      "regionWdId": "Q15499",
+      "latitude": -23.31,
+      "longitude": -51.162777777,
+      "population": 581382
+    },
+    {
+      "id": 131177,
+      "wikiDataId": "Q209537",
+      "type": "CITY",
+      "city": "East London",
+      "name": "East London",
+      "country": "South Africa",
+      "countryCode": "ZA",
+      "region": "Eastern Cape",
+      "regionCode": "EC",
+      "regionWdId": "Q130840",
+      "latitude": -33.01529,
+      "longitude": 27.91162,
+      "population": 478676
+    },
+    {
+      "id": 10904,
+      "wikiDataId": "Q92561",
+      "type": "CITY",
+      "city": "London",
+      "name": "London",
+      "country": "Canada",
+      "countryCode": "CA",
+      "region": "Ontario",
+      "regionCode": "ON",
+      "regionWdId": "Q1904",
+      "latitude": 42.9837,
+      "longitude": -81.2497,
+      "population": 422324
+    },
+    {
+      "id": 3855810,
+      "wikiDataId": "Q1026734",
+      "type": "ADM2",
+      "city": "Londuimbali",
+      "name": "Londuimbali",
+      "country": "Angola",
+      "countryCode": "AO",
+      "region": "Huambo Province",
+      "regionCode": "HUA",
+      "regionWdId": "Q218848",
+      "latitude": -12.241944444,
+      "longitude": 15.313333333,
+      "population": 134254
+    },
+    {
+      "id": 119119,
+      "wikiDataId": "Q49146",
+      "type": "CITY",
+      "city": "New London",
+      "name": "New London",
+      "country": "United States",
+      "countryCode": "US",
+      "region": "Connecticut",
+      "regionCode": "CT",
+      "regionWdId": "Q779",
+      "latitude": 41.354069,
+      "longitude": -72.10104,
+      "population": 27367
+    },
+    {
+      "id": 122683,
+      "wikiDataId": "Q2304585",
+      "type": "CITY",
+      "city": "Londonderry",
+      "name": "Londonderry",
+      "country": "United States",
+      "countryCode": "US",
+      "region": "New Hampshire",
+      "regionCode": "NH",
+      "regionWdId": "Q759",
+      "latitude": 42.865,
+      "longitude": -71.373888888,
+      "population": 25826
+    },
+    {
+      "id": 3185822,
+      "wikiDataId": "Q587819",
+      "type": "ADM2",
+      "city": "Londerzeel",
+      "name": "Londerzeel",
+      "country": "Belgium",
+      "countryCode": "BE",
+      "region": "Flemish Region",
+      "regionCode": "VLG",
+      "regionWdId": "Q9337",
+      "latitude": 51.0,
+      "longitude": 4.3,
+      "population": 18620
+    }
+  ],
+  "metadata": { "currentOffset": 0, "totalCount": 111 }
+}
