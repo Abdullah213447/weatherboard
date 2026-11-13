@@ -163,3 +163,30 @@ Done when it renders correctly at 375 / 768 / 1280 in both themes and `npm run c
 ```
 
 **Outcome:** A test push first confirmed that pushing to `main` deploys to production. The agent then built the tokens, theme control with a no-flash inline script, six primitives, the responsive shell, the first-run state and the dev-only preview. Contrast is enforced by a unit test over the token file (all pairings pass AA in both themes), and end-to-end tests cover the three widths, 44px touch targets, theme persistence and the preview's absence from production. It caught one bug of its own on the way: the hidden skip link kept its padding and failed the touch-target test.
+
+## Prompt 7 — Design review changes, then the weather data layer
+
+```text
+Design review decisions:
+- Accent: keep the indigo.
+- Sky tints: too faint. Give each condition its own recognisable character while keeping AA: clear day a warm open blue, clear night a deep navy, partly cloudy between the two, cloudy a cool grey-blue, fog a warm hazy grey, rain/drizzle a slate teal, snow an icy pale blue, thunderstorm a muted violet-slate. Unknown stays neutral. Fog, cloudy and unknown must be distinguishable side by side in the preview. Update the contrast test and the ratios in the plan.
+- Touch targets: 44px must not depend on pointer type alone. A reviewer resizing a desktop browser to 375 will measure with a mouse. Apply 44px minimum on every viewport below 768px and on any coarse pointer; 36px is allowed only at 768px and up with a fine pointer. Extend the e2e target test to cover a fine pointer at 375.
+- CI: add the Playwright e2e run, with browser caching.
+Commit these as their own commits before moving on.
+
+Then build the weather data layer per PLAN.md. No UI yet.
+- Record real fixtures first: OWM current and forecast and the Open-Meteo forecast for three cities chosen to stress local-day grouping (Karachi, Tokyo, and one at UTC-5 or further west), plus real error bodies (401, 404, 429 where obtainable). Trimmed, with the requests listed in the fixtures README, keys redacted.
+- Zod schemas for both providers at the boundary; parse failures map to bad-response.
+- OWM adapter with the local-day aggregation from the plan, today flagged partial, exactly 5 days.
+- Open-Meteo adapter with the WMO mapping into ConditionKind.
+- The fallback policy as a pure function of (outcome, circuit state), plus the session-scoped circuit, exactly as in the plan's table.
+- The http wrapper: 8 s timeout, abort support, AppError mapping including offline vs network failure.
+- A TanStack Query hook keyed by city coordinates with the stale time from the plan, no retries on non-retryable errors, and the last successful snapshot written for offline use as described in R6.
+- The AppError -> user copy mapping (title, message, action) for every kind and source. No generic copy anywhere; add a test that fails if any message contains "something went wrong" or similar.
+
+Tests: aggregation across timezone boundaries from the real fixtures, noon-slot condition selection, partial-today, WMO mapping, every row of the fallback table, circuit open and recovery, the offline-vs-online network branch, schema-mismatch fallback, and the copy mapping.
+
+Done when `npm run check` and e2e pass. Logical commits (fixtures, schemas, adapters, fallback, hook, copy), log this prompt, push, and confirm CI and the deploy are green.
+```
+
+**Outcome:** The three review changes landed as separate commits. A deep navy night needs light text, so the agent made night cards render in the dark scope on either theme instead of adding a second set of text colours. The data layer followed with 365 passing unit tests, built on fixtures recorded for Karachi, Tokyo and Honolulu at one instant that falls on two different local dates. The copy test did its job on the first run: it rejected five "service is down" messages that named the failure but gave the user nothing to do.
