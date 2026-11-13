@@ -59,7 +59,7 @@ describe('aggregateDaily', () => {
 
   it('labels a day by afternoon rain even when noon is only overcast', () => {
     const [, tomorrow] = aggregateDaily({
-      slots: [slot(24 + 12, 12, 'cloudy'), { ...slot(24 + 15, 11, 'rain'), precipitationMm: 0.4 }],
+      slots: [slot(24 + 12, 12, 'cloudy'), { ...slot(24 + 15, 11, 'rain'), precipitationMm: 0.5 }],
       now: MIDNIGHT + HOUR,
       utcOffsetSeconds: 0,
       current,
@@ -71,7 +71,7 @@ describe('aggregateDaily', () => {
   it('picks the most severe precipitation of the day', () => {
     const [, tomorrow] = aggregateDaily({
       slots: [
-        { ...slot(24 + 9, 12, 'drizzle'), precipitationMm: 0.2 },
+        { ...slot(24 + 9, 12, 'drizzle'), precipitationMm: 0.6 },
         { ...slot(24 + 12, 12, 'rain'), precipitationMm: 2 },
         { ...slot(24 + 15, 11, 'thunderstorm'), precipitationChancePct: 60 },
       ],
@@ -81,6 +81,34 @@ describe('aggregateDaily', () => {
     });
 
     expect(tomorrow?.condition.kind).toBe('thunderstorm');
+  });
+
+  it('ignores a passing shower: under 0.5 mm and under a 50% chance', () => {
+    const [, tomorrow] = aggregateDaily({
+      slots: [
+        slot(24 + 12, 12, 'partly-cloudy'),
+        { ...slot(24 + 15, 11, 'rain'), precipitationChancePct: 38, precipitationMm: 0.49 },
+      ],
+      now: MIDNIGHT + HOUR,
+      utcOffsetSeconds: 0,
+      current,
+    });
+
+    expect(tomorrow?.condition.kind).toBe('partly-cloudy');
+  });
+
+  it('counts a small amount when the chance is high', () => {
+    const [, tomorrow] = aggregateDaily({
+      slots: [
+        slot(24 + 12, 12, 'partly-cloudy'),
+        { ...slot(24 + 15, 11, 'rain'), precipitationChancePct: 80, precipitationMm: 0.1 },
+      ],
+      now: MIDNIGHT + HOUR,
+      utcOffsetSeconds: 0,
+      current,
+    });
+
+    expect(tomorrow?.condition.kind).toBe('rain');
   });
 
   it('ignores precipitation with no amount and a chance below 50%', () => {

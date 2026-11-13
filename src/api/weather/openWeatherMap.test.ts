@@ -118,14 +118,15 @@ describe('mapOpenWeatherMap with recorded responses', () => {
     });
   });
 
-  it('labels every Honolulu day as rain, because each has a daytime reading with rain in it', () => {
-    // A known consequence of the rule: these are trade-wind showers of 0.1-0.3 mm
-    // per 3 hours at a 20-38% chance, yet any reported amount counts as meaningful.
+  it('does not call Honolulu\u2019s passing showers rainy days', () => {
+    // Trade-wind showers: 0.1-0.3 mm per 3 hours at a 20-38% chance, below both
+    // thresholds, so each day keeps its 11:00 reading. Today is rain because it
+    // is raining at the time of the reading; 17 Nov because 11:00 itself is a shower.
     expect(honolulu.daily.map((day) => day.condition.kind)).toEqual([
       'rain',
-      'rain',
-      'rain',
-      'rain',
+      'clear',
+      'partly-cloudy',
+      'clear',
       'rain',
     ]);
   });

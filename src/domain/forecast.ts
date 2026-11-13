@@ -33,6 +33,8 @@ const MIDDAY_FROM = 9;
 const MIDDAY_TO = 15;
 /** A chance of precipitation at or above this is worth telling the user about. */
 const MEANINGFUL_CHANCE_PCT = 50;
+/** So is this much in one 3-hour reading. Below it is a passing shower, not a rainy day. */
+const MEANINGFUL_AMOUNT_MM = 0.5;
 
 /** Precipitation, most disruptive first. Someone planning their day needs the worst of these. */
 const PRECIPITATION_BY_SEVERITY: readonly ConditionKind[] = [
@@ -46,7 +48,8 @@ const PRECIPITATION_BY_SEVERITY: readonly ConditionKind[] = [
 function isMeaningfulPrecipitation(slot: ForecastSlot): boolean {
   return (
     PRECIPITATION_BY_SEVERITY.includes(slot.condition.kind) &&
-    ((slot.precipitationMm ?? 0) > 0 || (slot.precipitationChancePct ?? 0) >= MEANINGFUL_CHANCE_PCT)
+    ((slot.precipitationMm ?? 0) >= MEANINGFUL_AMOUNT_MM ||
+      (slot.precipitationChancePct ?? 0) >= MEANINGFUL_CHANCE_PCT)
   );
 }
 
@@ -94,7 +97,8 @@ function closestToNoon(
  *   includes the current temperature, and is always marked partial because
  *   the hours already gone are missing.
  * - A day's condition answers "what should I plan for?". If any daytime
- *   reading (06:00-18:00 local) has meaningful precipitation, the most severe
+ *   reading (06:00-18:00 local) has meaningful precipitation (a 50% chance
+ *   or more, or at least 0.5 mm in the reading), the most severe
  *   kind labels the day, so an overcast noon followed by an afternoon of rain
  *   reads as rain. Otherwise the reading nearest local noon labels it.
  * - Today follows the same rule over the readings that are left, and counts
