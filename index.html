@@ -4,8 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="A personal weather dashboard that works offline." />
+    <meta name="theme-color" content="#f7f7f5" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>WeatherBoard</title>
+    <script>
+      // Runs before first paint so the wrong theme never flashes.
+      // Keep the key and colours in sync with src/features/prefs/theme.ts.
+      (function () {
+        var preference = 'system';
+        try {
+          var stored = localStorage.getItem('wb:theme');
+          if (stored === 'light' || stored === 'dark') preference = stored;
+        } catch (e) {}
+        var dark =
+          preference === 'dark' ||
+          (preference === 'system' &&
+            typeof matchMedia === 'function' &&
+            matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', dark ? '#0e0f11' : '#f7f7f5');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
