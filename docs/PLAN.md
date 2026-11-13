@@ -126,13 +126,14 @@ interface WeatherProvider {
 type AppError = {
   kind:
     | 'offline'
+    | 'network' // online, but the request never arrived
     | 'timeout'
     | 'rate-limited'
     | 'auth'
     | 'not-found'
     | 'provider-down'
     | 'bad-response';
-  source: 'geodb' | ProviderId | 'push';
+  source: 'weather' | ProviderId | 'geodb' | 'push'; // 'weather': every provider failed
   retryAfterMs?: number;
 };
 ```
