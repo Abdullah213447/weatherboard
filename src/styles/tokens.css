@@ -1,54 +1,266 @@
 /*
- * Design tokens. This file is the single source of truth for colour, type,
- * radius and motion. Components use the Tailwind utilities generated from the
- * @theme block below and never hard-code a value.
+ * Design tokens: the single source of truth for colour, type, radius, shadow
+ * and motion. Components use the Tailwind utilities generated from the @theme
+ * blocks at the bottom and never hard-code a value.
  *
- * PLACEHOLDER VALUES: the real palette, type scale and sky tints arrive with
- * the design pass. Only the structure is final.
+ * Colours are plain hex on purpose: tokens.test.ts parses this file and
+ * asserts WCAG AA contrast for every text/background pairing in both themes.
+ * Change a value here and that test tells you if it broke accessibility.
+ *
+ * Themes are scoped to a [data-theme] attribute rather than a media query.
+ * The inline script in index.html resolves the user's preference (or the
+ * system setting) before first paint, and any subtree can opt into a theme,
+ * which the ?preview=ui page relies on.
  */
 
-:root {
-  color-scheme: light dark;
+:root,
+[data-theme='light'] {
+  color-scheme: light;
 
+  /* Elevation: canvas -> surface -> raised, told apart by tone and a 1px line. */
+  --wb-canvas: #f7f7f5;
   --wb-surface: #ffffff;
-  --wb-surface-raised: #fafafa;
-  --wb-border: #e4e4e7;
-  --wb-text: #18181b;
-  --wb-text-muted: #71717a;
-  --wb-accent: #2563eb;
-  --wb-danger: #b91c1c;
+  --wb-raised: #ffffff;
+  --wb-hover: #f0f0ed;
+
+  --wb-line: #e5e5e0;
+  --wb-line-strong: #d0d0c9;
+  /* Boundary of inputs: must reach 3:1 against the surface. */
+  --wb-control: #8a8a83;
+
+  --wb-ink: #1a1a18;
+  --wb-muted: #5c5c57;
+  --wb-subtle: #6b6b65;
+
+  /* The one accent: focus rings, the primary action, active states. */
+  --wb-accent: #3a55d6;
+  --wb-accent-hover: #2f47ba;
+  --wb-on-accent: #ffffff;
+
+  --wb-success: #1a6b3c;
+  --wb-success-soft: #edf7f0;
+  --wb-success-line: #bfe0cb;
+
+  --wb-warning: #7d5200;
+  --wb-warning-soft: #fdf6e3;
+  --wb-warning-line: #ecd9a0;
+
+  --wb-danger: #b3261e;
+  --wb-danger-soft: #fdf0ee;
+  --wb-danger-line: #f0c4bf;
+  --wb-danger-solid: #b3261e;
+  --wb-danger-solid-hover: #991f18;
+  --wb-on-danger: #ffffff;
+
+  --wb-info: #1f5fa8;
+  --wb-info-soft: #eef4fb;
+  --wb-info-line: #c3d8ef;
+
+  --wb-scrim: rgb(26 26 24 / 0.4);
+  --wb-shadow-raised: 0 1px 2px rgb(26 26 24 / 0.04), 0 12px 32px rgb(26 26 24 / 0.1);
+
+  /*
+   * Sky tints. Used only as the background of the current-conditions card,
+   * keyed by condition and day/night. Deliberately faint: ink and muted text
+   * must stay above 4.5:1 on every one of them.
+   */
+  --wb-sky-clear-day: #e8f2fd;
+  --wb-sky-clear-night: #eae9f8;
+  --wb-sky-partly-cloudy-day: #ecf2f9;
+  --wb-sky-partly-cloudy-night: #ebebf5;
+  --wb-sky-cloudy-day: #eef0f3;
+  --wb-sky-cloudy-night: #ebecf1;
+  --wb-sky-fog-day: #f1f1ef;
+  --wb-sky-fog-night: #ededee;
+  --wb-sky-drizzle-day: #e9f1f3;
+  --wb-sky-drizzle-night: #e8ecf2;
+  --wb-sky-rain-day: #e4eef5;
+  --wb-sky-rain-night: #e4e8f2;
+  --wb-sky-freezing-rain-day: #e6f1f6;
+  --wb-sky-freezing-rain-night: #e5ebf4;
+  --wb-sky-snow-day: #f2f6fb;
+  --wb-sky-snow-night: #eef0f8;
+  --wb-sky-thunderstorm-day: #ebe9f5;
+  --wb-sky-thunderstorm-night: #e6e4f2;
+  --wb-sky-unknown-day: #f3f3f1;
+  --wb-sky-unknown-night: #efeff0;
 }
 
-/* System preference, unless the user has forced light. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --wb-surface: #09090b;
-    --wb-surface-raised: #18181b;
-    --wb-border: #27272a;
-    --wb-text: #fafafa;
-    --wb-text-muted: #a1a1aa;
-    --wb-accent: #60a5fa;
-    --wb-danger: #f87171;
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --wb-canvas: #0e0f11;
+  --wb-surface: #16171a;
+  --wb-raised: #1d1f23;
+  --wb-hover: #22242a;
+
+  --wb-line: #26282d;
+  --wb-line-strong: #34373d;
+  --wb-control: #6f737c;
+
+  --wb-ink: #ededef;
+  --wb-muted: #a3a5ab;
+  --wb-subtle: #8f9198;
+
+  --wb-accent: #8ea2ff;
+  --wb-accent-hover: #a5b5ff;
+  --wb-on-accent: #0e0f11;
+
+  --wb-success: #6fd39a;
+  --wb-success-soft: #12261b;
+  --wb-success-line: #1f4a31;
+
+  --wb-warning: #e9bd5b;
+  --wb-warning-soft: #2a2110;
+  --wb-warning-line: #524119;
+
+  --wb-danger: #ff8f85;
+  --wb-danger-soft: #2c1614;
+  --wb-danger-line: #5a2622;
+  --wb-danger-solid: #ff8f85;
+  --wb-danger-solid-hover: #ffa69e;
+  --wb-on-danger: #1a0b0a;
+
+  --wb-info: #84b9f5;
+  --wb-info-soft: #131f2e;
+  --wb-info-line: #234468;
+
+  --wb-scrim: rgb(0 0 0 / 0.6);
+  --wb-shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px rgb(0 0 0 / 0.45);
+
+  --wb-sky-clear-day: #12233a;
+  --wb-sky-clear-night: #15152b;
+  --wb-sky-partly-cloudy-day: #15222f;
+  --wb-sky-partly-cloudy-night: #17182a;
+  --wb-sky-cloudy-day: #1a1e24;
+  --wb-sky-cloudy-night: #191b22;
+  --wb-sky-fog-day: #1c1d1f;
+  --wb-sky-fog-night: #1a1b1d;
+  --wb-sky-drizzle-day: #14222a;
+  --wb-sky-drizzle-night: #141c28;
+  --wb-sky-rain-day: #11212d;
+  --wb-sky-rain-night: #111a2a;
+  --wb-sky-freezing-rain-day: #122430;
+  --wb-sky-freezing-rain-night: #131d2c;
+  --wb-sky-snow-day: #1c2330;
+  --wb-sky-snow-night: #1b1f2e;
+  --wb-sky-thunderstorm-day: #1c1a2e;
+  --wb-sky-thunderstorm-night: #19172b;
+  --wb-sky-unknown-day: #18191c;
+  --wb-sky-unknown-night: #17181a;
+}
+
+/* Motion: short and quiet, and gone entirely when the user asks for less. */
+:root {
+  --wb-duration-fast: 150ms;
+  --wb-duration-base: 200ms;
+  --wb-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --wb-duration-fast: 0ms;
+    --wb-duration-base: 0ms;
   }
 }
 
-/* Manual override. Must mirror the block above. */
-:root[data-theme='dark'] {
-  --wb-surface: #09090b;
-  --wb-surface-raised: #18181b;
-  --wb-border: #27272a;
-  --wb-text: #fafafa;
-  --wb-text-muted: #a1a1aa;
-  --wb-accent: #60a5fa;
-  --wb-danger: #f87171;
+/* Static scales. Clearing a namespace first removes Tailwind's defaults, so
+   only the steps defined here exist. */
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Type: six steps. `display` is reserved for the current temperature. */
+  --text-*: initial;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-xl--letter-spacing: -0.015em;
+  --text-display: clamp(4.5rem, 3rem + 7vw, 7rem);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.045em;
+  --text-display--font-weight: 500;
+
+  /* Spacing: Tailwind's 4px base unit, so every step sits on the 4/8 grid. */
+  --spacing: 0.25rem;
+
+  --radius-*: initial;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-full: 9999px;
+
+  --animate-*: initial;
+  --animate-pulse-soft: wb-pulse 1.6s ease-in-out infinite;
+  --animate-fade-in: wb-fade-in var(--wb-duration-base) var(--wb-ease);
+  --animate-spin: wb-spin 0.8s linear infinite;
+
+  @keyframes wb-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+  @keyframes wb-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes wb-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
 
+/* Theme-dependent values, resolved at the point of use so nested
+   [data-theme] scopes work. */
 @theme inline {
+  --color-*: initial;
+
+  --color-canvas: var(--wb-canvas);
   --color-surface: var(--wb-surface);
-  --color-surface-raised: var(--wb-surface-raised);
-  --color-border: var(--wb-border);
-  --color-text: var(--wb-text);
-  --color-text-muted: var(--wb-text-muted);
+  --color-raised: var(--wb-raised);
+  --color-hover: var(--wb-hover);
+
+  --color-line: var(--wb-line);
+  --color-line-strong: var(--wb-line-strong);
+  --color-control: var(--wb-control);
+
+  --color-ink: var(--wb-ink);
+  --color-muted: var(--wb-muted);
+  --color-subtle: var(--wb-subtle);
+
   --color-accent: var(--wb-accent);
+  --color-accent-hover: var(--wb-accent-hover);
+  --color-on-accent: var(--wb-on-accent);
+
+  --color-success: var(--wb-success);
+  --color-success-soft: var(--wb-success-soft);
+  --color-success-line: var(--wb-success-line);
+  --color-warning: var(--wb-warning);
+  --color-warning-soft: var(--wb-warning-soft);
+  --color-warning-line: var(--wb-warning-line);
   --color-danger: var(--wb-danger);
+  --color-danger-soft: var(--wb-danger-soft);
+  --color-danger-line: var(--wb-danger-line);
+  --color-danger-solid: var(--wb-danger-solid);
+  --color-danger-solid-hover: var(--wb-danger-solid-hover);
+  --color-on-danger: var(--wb-on-danger);
+  --color-info: var(--wb-info);
+  --color-info-soft: var(--wb-info-soft);
+  --color-info-line: var(--wb-info-line);
+
+  --color-scrim: var(--wb-scrim);
+
+  --shadow-*: initial;
+  --shadow-raised: var(--wb-shadow-raised);
+
+  --default-transition-duration: var(--wb-duration-fast);
+  --default-transition-timing-function: var(--wb-ease);
 }

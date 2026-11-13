@@ -13,6 +13,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
-    css: false,
+    // The token contrast test reads tokens.css as text; without this Vitest stubs every CSS import.
+    css: { include: /tokens\.css/ },
   },
 });

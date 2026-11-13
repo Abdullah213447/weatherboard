@@ -1,12 +1,22 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
 @import './tokens.css';
 
 @layer base {
-  body {
-    background-color: var(--color-surface);
-    color: var(--color-text);
+  html {
+    font-family: var(--font-sans);
+    /* Every figure lines up in columns; single-storey digits stay unambiguous. */
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    /* A stray wide child must never make the page scroll sideways. */
+    overflow-x: clip;
   }
 
   :focus-visible {
@@ -14,6 +24,13 @@
     outline-offset: 2px;
   }
 
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  /* Belt and braces: the duration tokens already drop to 0, and this also
+     stops keyframe animations such as the skeleton pulse. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
