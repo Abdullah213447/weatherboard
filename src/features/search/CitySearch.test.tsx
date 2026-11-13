@@ -175,6 +175,28 @@ describe('known cities (recent searches and favourites)', () => {
     expect(after[1]).toHaveTextContent('Lahore');
   });
 
+  it('labels a favourite as such and lists favourites ahead of recent cities', async () => {
+    const lahouaza = nth(lahoCities, 4);
+    const { user, input } = setup({ laho: { cities: lahoCities } }, [
+      { city: lahouaza, label: 'Favourite' },
+      { city: laholm, label: 'Recent' },
+    ]);
+
+    await user.type(input, 'Laho');
+    await waitFor(() => {
+      expect(screen.getAllByRole('option')).toHaveLength(5);
+    });
+    const list = screen.getAllByRole('option');
+
+    expect(list[0]).toHaveTextContent('Lahouaza');
+    expect(list[0]).toHaveTextContent('Favourite');
+    expect(list[1]).toHaveTextContent('Laholm');
+    expect(list[1]).toHaveTextContent('Recent');
+    // Network results follow, unlabelled.
+    expect(list[2]).toHaveTextContent('Lahore');
+    expect(list[2]).not.toHaveTextContent(/Favourite|Recent/);
+  });
+
   it('are not offered when they do not match what was typed', async () => {
     const { user, input } = setup({ lond: { cities: londCities } }, known);
 
