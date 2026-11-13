@@ -18,6 +18,7 @@ import { IconButton } from '@/ui/IconButton';
 import { InlineAlert } from '@/ui/InlineAlert';
 import { LiveRegion } from '@/ui/LiveRegion';
 import { Skeleton } from '@/ui/Skeleton';
+import { WeatherIcon } from '@/ui/WeatherIcon';
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -111,6 +112,24 @@ function Specimens() {
               </div>
             );
           })}
+        </div>
+      </Section>
+
+      <Section title="Weather icons (every condition, day then night)">
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+          {skyConditions.map((condition) => (
+            <div
+              key={`${condition.kind}-${String(condition.isDay)}`}
+              className="border-line bg-surface flex flex-col items-center gap-1 rounded-md border p-2"
+            >
+              <WeatherIcon condition={condition} size={48} />
+              <span className="text-muted text-center text-xs">
+                {condition.kind}
+                <br />
+                {condition.isDay ? 'day' : 'night'}
+              </span>
+            </div>
+          ))}
         </div>
       </Section>
 

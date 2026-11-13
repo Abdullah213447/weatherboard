@@ -9,6 +9,9 @@ const draw = (kind: (typeof CONDITION_KINDS)[number], isDay: boolean) => {
   return svg;
 };
 
+/** The drawing itself, with generated ids removed so only real differences count. */
+const shape = (svg: SVGElement) => svg.innerHTML.replace(/(id="|url\(#)[^")]+/g, '$1');
+
 describe('WeatherIcon', () => {
   it.each(CONDITION_KINDS)('%s: draws something, hidden from assistive technology', (kind) => {
     const svg = draw(kind, true);
@@ -20,14 +23,15 @@ describe('WeatherIcon', () => {
   it.each(CONDITION_KINDS.filter((kind) => kind !== 'unknown'))(
     '%s: has different day and night drawings',
     (kind) => {
-      expect(draw(kind, true).innerHTML).not.toBe(draw(kind, false).innerHTML);
+      expect(shape(draw(kind, true))).not.toBe(shape(draw(kind, false)));
     },
   );
 
   it('draws every condition differently from every other', () => {
-    const drawings = CONDITION_KINDS.map((kind) => draw(kind, true).innerHTML);
-
-    expect(new Set(drawings).size).toBe(CONDITION_KINDS.length);
+    for (const isDay of [true, false]) {
+      const drawings = CONDITION_KINDS.map((kind) => shape(draw(kind, isDay)));
+      expect(new Set(drawings).size).toBe(CONDITION_KINDS.length);
+    }
   });
 
   it('animates only when motion is allowed', () => {

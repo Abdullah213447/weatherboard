@@ -50,6 +50,25 @@ function Peek({ isDay, maskId }: { isDay: boolean; maskId: string }) {
   );
 }
 
+/**
+ * Overcast: a second cloud behind the first instead of the sun or moon. At
+ * night a single star shows through, so the two forms still differ.
+ */
+function Overcast({ isDay, maskId }: { isDay: boolean; maskId: string }) {
+  return (
+    <>
+      <g mask={`url(#${maskId})`} opacity="0.75">
+        <path d={CLOUD} transform="translate(19.5 0.5) scale(0.6)" />
+      </g>
+      {!isDay && (
+        <g className="motion-safe:animate-icon-twinkle">
+          <path d="M9 9v4M7 11h4" strokeWidth="1.5" />
+        </g>
+      )}
+    </>
+  );
+}
+
 function Cloud({ dashed = false }: { dashed?: boolean }) {
   return (
     <path
@@ -148,7 +167,11 @@ export function WeatherIcon({ condition, size = 48, className }: WeatherIconProp
           <rect width="48" height="48" fill="white" />
           <path d={CLOUD} fill="black" stroke="black" strokeWidth="5" />
         </mask>
-        <Peek isDay={isDay} maskId={maskId} />
+        {kind === 'cloudy' ? (
+          <Overcast isDay={isDay} maskId={maskId} />
+        ) : (
+          <Peek isDay={isDay} maskId={maskId} />
+        )}
         <Cloud />
         {below(kind)}
       </g>
