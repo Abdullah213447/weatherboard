@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- The WeatherBoard mark: a sun above two lines of horizon, in the app's ink and canvas colours. -->
+  <circle cx="256" cy="212" r="88" fill="#f7f7f5"/>
+  <path d="M120 344h272M176 404h160" fill="none" stroke="#f7f7f5" stroke-width="30" stroke-linecap="round"/>
+</svg>

@@ -57,6 +57,12 @@ export default tseslint.config(
       ],
     },
   },
-  { files: ['**/*.js'], extends: [tseslint.configs.disableTypeChecked] },
+  {
+    // Plain scripts and config: not part of any TypeScript project. Build
+    // scripts run in Node and hand functions to a browser page.
+    files: ['**/*.{js,mjs}'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
   prettier,
 );
