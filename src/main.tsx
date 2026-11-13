@@ -1,6 +1,8 @@
 import { StrictMode, type ReactNode } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
 import { App } from '@/App';
+import { createQueryClient } from '@/app/queryClient';
 import '@/styles/index.css';
 
 const container = document.getElementById('root');
@@ -20,6 +22,11 @@ async function resolveView(): Promise<ReactNode> {
 }
 
 const root = createRoot(container);
+const queryClient = createQueryClient();
 void resolveView().then((view) => {
-  root.render(<StrictMode>{view}</StrictMode>);
+  root.render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>{view}</QueryClientProvider>
+    </StrictMode>,
+  );
 });
