@@ -44,6 +44,13 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     // Placeholder keys: every API request in these tests is intercepted and
     // answered from a recorded response, so no real key or quota is ever used.
-    env: { VITE_RAPIDAPI_KEY: 'e2e-intercepted', VITE_OPENWEATHER_API_KEY: 'e2e-intercepted' },
+    env: {
+      VITE_RAPIDAPI_KEY: 'e2e-intercepted',
+      VITE_OPENWEATHER_API_KEY: 'e2e-intercepted',
+      // A well-formed public key that belongs to nobody: the push subscription
+      // is stood in for in these tests, but the app still has to decode a key.
+      VITE_VAPID_PUBLIC_KEY:
+        'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U',
+    },
   },
 });
