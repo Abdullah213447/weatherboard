@@ -227,3 +227,41 @@ Done when `npm run check` and e2e pass. Logical commits, log this prompt, push, 
 ```
 
 **Outcome:** Both review changes landed first. City search followed: cleaning rules verified on recorded responses (Lahore now appears, London leads), a request engine with cache, local filtering, one-per-second spacing and a backup geocoder, and an ARIA combobox with every state and validation rule. Measured against the live API, a first network answer takes 673 to 981 ms, so the 300 ms budget is met only for cached answers; the agent then removed the pause for those, taking them from about 175 ms to under 30 ms. It also pushed back on one rule: merging results by distance alone would merge neighbouring cities, so names must be related too.
+
+## Prompt 9 — Review changes, then the weather display
+
+```text
+Review decisions:
+- Precipitation: add a threshold. A slot's rain/snow/thunder counts as meaningful when its chance is 50% or more, or its amount is at least 0.5 mm in the 3-hour slot. Honolulu's trade-wind showers should go back to their noon-nearest condition; Tokyo 15 Nov stays rain. Update the pinned test.
+- Departures 1–6 and the link format: accepted.
+- 300 ms: improve what we can without adding a data source. Preconnect to the GeoDB host when the search field first gets focus, and show matching recent searches and favourites instantly (labelled as such) while the network request runs, merging GeoDB results in when they arrive without the list jumping. Re-measure and update the table in the plan.
+Commit these as their own commits.
+
+Then build the weather display (requirement 02), using the existing hook.
+
+Current conditions card (the sky-tinted card):
+- City, region and country; the city's local time and date, updating each minute.
+- Condition label and animated icon; the temperature as the dominant element; feels-like; today's high/low.
+- A compact metric row: humidity, wind speed with a direction arrow and compass label, chance of precipitation, sunrise and sunset in the city's local time (add sunrise/sunset to the Open-Meteo request if needed).
+- A quiet status line in the header status slot: "Updated 4 min ago · OpenWeatherMap", or "Open-Meteo (backup)" when the fallback served the data, with a small status dot, Vercel-style. The relative time updates live.
+
+5-day forecast:
+- One row per day: day name ("Today" for the first, marked partial where relevant), icon, condition, chance of precipitation when meaningful, and a min–max range bar scaled across the whole five-day span so days compare visually, with the current temperature marked on today's bar.
+- Readable as one column at 375; no overflow anywhere.
+
+Icons: our own SVG set, one per ConditionKind with day/night variants, with subtle CSS animation that stops under prefers-reduced-motion. Not the OWM PNGs. Decorative icons are aria-hiddth the condition given as text.
+
+States:
+- Loading: skeletons that match the final layout exactly, no layout shift (verify CLS in the e2e or with a performance observer).
+- Error with no cached data: InlineAlert with the mapped copy and a Retry action.
+- Error with cached data for the same city: show the cached snapshot with a clear "Showing data from 14:05, couldn't refresh: <reason>" note and Retry.
+- Live region announces the city and temperature when new data loads. Document title becomes "Lahore 31° · WeatherBoard".
+
+Units (bonus): °C/°F toggle in a small settings area, persisted through safeStorage, converting at render with no refetch; wind follows (km/h with °C, mph with °F). Default from the browser locale (°F for US), overridden once the user chooses.
+
+Tests: formatting and conversion with rounding edge cases, range-bar scaling, relative time, each state (loading, error, error-with-cache, success) with the real fixtures, unit toggle without refetch. e2e at 375 / 768 / 1280: select a city, card and forecast render, no horizontal scroll, toggle units.
+
+Done when `npm run check` and e2e pass. Logical commits, log this prompt, push, confirm CI and deploy are green.
+```
+
+**Outcome:** The threshold, preconnect and instant recent cities landed first; measured, recent cities appear in about 20 ms while preconnect made no measurable difference, and the plan says so. The weather display followed: the sky-tinted card, a five-day list on one shared scale, the app's own animated icon set, every loading and error state, and units that convert without a request. Two things the tests caught along the way: the new locale default made every test run in Fahrenheit until the test locale was pinned, and the storage wrapper could let a stale in-memory value override storage that had been cleared.
