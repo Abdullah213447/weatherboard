@@ -361,3 +361,61 @@ Done when `npm run check` and e2e pass. Logical commits (icons and manifest, ser
 **Outcome:** Folded favourites became one-tap city targets, still inside the 375x667 fold with five long names. The PWA followed: a generated icon set and manifest, a service worker that caches only the shell and waits for the user before updating, one connectivity source, and offline as a calm mode with the saved city, an honest message for cities that are not saved, and a refresh on reconnect. Installability is asserted through the DevTools protocol. The browser tests caught two layout shifts from notices that appeared after load (fixed by making them overlays), and the unit tests caught that a retry briefly replaced the saved weather with a skeleton.
 
 *Supplied the Upstash credentials for the reminder sender; values not recorded.*
+
+## Prompt 12 — Review changes, then daily reminders
+
+```text
+Review decisions:
+- PWA decisions 1–5: accepted, with one adjustment. Notices must not pile up: show one at a time (the update prompt first, then "Ready to use offline", then the install card), and hold the install card back until a first city has loaded.
+- Reconcile the precache count (12 live, 14 in the plan) and correct the plan.
+- Real devices: I'll run the manual checklist in one pass once reminders are deployed.
+Commit these as their own commits.
+
+Then build daily reminders (requirement 06) on the architecture in the plan: real Web Push through the service worker, sent by a small server. Generate the VAPID pair locally, add it to .env.local and Vercel without printing the private key, and use the production URL as the VAPID subject.
+
+One design change from the plan: schedule as data instead of scan-and-guard. A Redis sorted set holds subscription ids scored by their next fire time in UTC, and a pure nextFireAt(time, timeZone, after) computes that with Intl, so DST and travel are handled by construction. If you see a problem with this, say so before building.
+
+Server (Vercel functions under /api, kept as small as it can be):
+- Subscribe (create or update): validate the body with Zod – the push subscription, a time as HH:mm, an IANA time zone, the city (id, name, coordinates) and the unit. The endpoint must be https and on an allowlist of the known push services (verify the hostnames), because the server will later POST to it. Store it under a hash of the endpoint with a 90-day expiry that the app renews when it opens.
+- Unsubscribe: remove the record and its schedule entry.
+- Dispatch, called by QStash every 5 minutes: verify the QStash signature against the raw body and reject anything else. Take the due ids (capped per run) and claim each one atomically by moving it to its next occurrence before sending, so a retried or overlapping run can't send twice. Skip the send when it's more than 60 minutes late. Fetch the day's forecast from Open-Meteo once per distinct city and send with web-push (TThour, and a topic so an undelivered message is replaced, not stacked). If the forecast can't be fetched, still send a plain reminder. Remove subscriptions the push service reports as gone (404/410) and ids whose record has expired. Respond with counts only.
+- Test send: for a stored subscription only, send one notification about 10 seconds after the request, through the same path, so it can be seen arriving with the tab closed.
+- Limits: same-origin requests only for subscribe, unsubscribe and test; a body size cap; a per-IP rate limit; a cap on stored subscriptions. No secrets or subscription details in logs or responses.
+
+Service worker:
+- push: always show a notification inside waitUntil, even when the payload can't be read (a plain fallback), because some browsers revoke a subscription that receives a push without showing one. Title like "Karachi · 26° and clear", body with the high, low and chance of rain, our icon and a monochrome badge, and a tag so a new reminder replaces the old one.
+- notificationclick: close it, then focus an open WeatherBoard window and take it to that city, or open one.
+- pushsubscriptionchange: re-subscribe and update the server.
+
+Client – a "Daily reminder" card in the secondary column:
+- Controls: a time input (default 07:30, any minute, replacing the 5-minute steps in the plan; the copy says it arrives within 5 minutes of the chosen time) and the city to report (the city on screen by default, or any favourite). Validate the time on blur and on submit with an inline message.
+- Explain before asking: "Turn on" first opens our own explainer – what we send (one notification a day with the day's forecast), when, what is stored on the server (the browser's push address, the time, time zone, city and unit) and that it can be turned off at any time. The browser's permission prompt is requested only after the user continues, directly in that click handler since Safari needs the user gesture. Add a test that requestPermission is never called before that.
+- States, each with its own copy, none of them affecting the rest of the app:
+  - unsupported browser: says so and what works instead;
+  - iPhone or iPad, not installed: explains that reminders need WeatherBoard on the Home Screen (iOS 16.4 or later) and reuses the install steps;
+  - off;
+  - on: shows the next reminder time, zone and city (from the same nextFireAt), lets me change the time and city, and has "Send a test notification" and "Turn off";
+  - blocked: explains how to allow notifications again in the browser's site settings, and re-checks when the page regains focus;
+  - couldn't save: says what failed and what to do; the card never shows "on" unless the server confirmed it;
+  - offline: changes are disabled with the reason, and it says existing reminders still arrive.
+- On app open, reconcile quietly: if the permission or subscription is gone, show "off" with a short note; if the time zone, unit or city details changed, update the server.
+
+Tests:
+- nextFireAt across time zones and DST: a time that doesn't exist on a spring-forward day, a time that occurs twice on a fall-back day, times near midnight, and zones at both ends of the date line.
+- Dispatch against a Redis stand-in: due and not due, two overlapping runs send once, later than 60 minutes is skipped but rescheduled, gone subscriptions are removed, a forecast failure still sends, an invalid signature is rejected.
+- Body validation and the endpoint allowlist; notification text in both units.
+- The permission state machine and every card state; the explainer-before-prompt order; reconcile on open.
+- Service worker handlers as pure functions: payload to notification options, unreadable payload to the fallback.
+- e2e in Chromium with /api mocked: turn on with permission granted; permission denied leaves search, weather and favourites working; PushManager removed shows the unsupported copy.
+- CI covers /api too: typecheck, lint and tests. Check the functions actually build on Vercel (path aliases often don't resolve there).
+
+Deploy and verify:
+- After the deploy: an unsigned call to dispatch is rejected, and subscribe calls with a bad body or a non-allowlisted endpoint are refused with clear messages.
+- Create the QStash schedule from a script that can be re-run without creating a duplicate: every 5 minutes, to the production dispatch URL, with no retries, since the next run picks up anything still due. Trigger one run by hand through QStash, watch the next scheduled one, and report their counts.
+- Update the plan and .env.example.
+- Give me the manual steps to prove a real notification end to end – desktop Chrome with the tab closed, Android, and an installed iPhone app – including the OS-level settings that can hide a notification.
+
+Done when `npm run check` and e2e pass. Logical commits (server, schedule script, service worker, client, tests, docs), log this prompt, push, confirm CI and deploy are green.
+```
+
+**Outcome:** Asked to look for a problem with scheduling as data, the agent found one that had to be designed out rather than a reason not to do it: a time that occurs twice on a fall-back day would fire twice unless the next occurrence is defined per local date. It then built the server (three functions, a sorted-set schedule, claim-before-send), the service worker handlers, and a reminder card that explains itself before the browser prompt and says "on" only when the server confirms. Building the functions locally the way Vercel does, and loading the output in Node, caught two failures that would otherwise have appeared only in production: extensionless imports, and a library with no default export.
