@@ -18,6 +18,8 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${String(PORT)}`,
     trace: 'on-first-retry',
+    // Units default from the locale; tests assume a metric one unless they say otherwise.
+    locale: 'en-GB',
   },
   projects: [
     {
