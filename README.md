@@ -239,12 +239,20 @@ Verified by me against the live site, in desktop Chromium:
 - That the reminder endpoints refuse unsigned, cross-origin and malformed requests.
 - That the QStash schedule exists and that a manual and a scheduled run reached the dispatch function and returned 200.
 
-Not covered by anything above:
+Verified by me on real devices – a MacBook in Chrome, and an iPhone with the app installed from Safari:
 
-- Real phones and tablets. Everything in this section ran in desktop Chromium, including the phone-sized tests.
-- A reminder delivered end to end to a real browser, and what a tap on it does outside a unit test.
+- A test notification arrived with the tab closed.
+- Tapping it opened the app on the right city.
+- A scheduled reminder arrived within 5 minutes of its time.
+- The installed app reopened offline on the last city, with the "Offline mode" banner.
+
+Not verified on a real device:
+
+- Android phones, tablets, and any other desktop browser.
+- Safari and Firefox on a desktop.
 - The update prompt between two real deployed versions.
-- Safari and Firefox.
+- A replaced push subscription (`pushsubscriptionchange`).
+- Anything else not listed above. The phone-sized automated tests ran in desktop Chromium, not on a phone.
 
 ## Testing and CI
 
