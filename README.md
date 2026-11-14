@@ -177,9 +177,9 @@ Each of these is recorded with its number in the Decisions section of [docs/PLAN
 
 **How a day gets its condition.** The free OpenWeatherMap plan has no daily forecast, only 3-hour readings. I group them by the city's local date. A day is labelled by its most severe meaningful precipitation between 06:00 and 18:00 – meaningful means a chance of 50% or more, or at least 0.5 mm in the reading. Otherwise the reading nearest noon decides. If that reading is itself a too-light shower, cloud cover decides. The label should answer what to plan for. I changed this rule three times during review, each time after looking at a real forecast that read wrong.
 
-**GeoDB limits and result cleaning.** The free plan allows 1 request per second and 1,000 a day. So the search caches by prefix for the session, filters a complete earlier result locally instead of asking again, spaces network requests one second apart, and waits 150 ms after typing stops. The raw results also needed work: with a city-type filter Lahore is missing, because GeoDB files it as two administrative areas, and "Greater London" ranks above London. I ask for the ten largest matches with no filter and clean them in `domain/cities.ts`: plain names, one entry per place, a city ahead of a district. Two results count as one place only if their names are related as well as close – distance alone would merge real neighbours.
+**GeoDB limits and result cleaning.** The free plan allows 1 request per second and 1,000 a day. So the search caches by prefix for the session, filters a complete earlier result locally instead of asking again, and spaces network requests one second apart. The first request goes at the second letter; after that it waits 150 ms after typing stops. The raw results also needed work: with a city-type filter Lahore is missing, because GeoDB files it as two administrative areas, and "Greater London" ranks above London. I ask for the ten largest matches with no filter and clean them in `domain/cities.ts`: plain names, one entry per place, a city ahead of a district. Names that start with what you typed come before names that only match on a later word, so "Par" leads with Paris and not with two larger districts called Parganas. Two results count as one place only if their names are related as well as close – distance alone would merge real neighbours.
 
-**Typed errors, and a test on the copy.** Every failure becomes an `AppError` with a kind (offline, network, timeout, rate-limited, auth, not-found, provider-down, bad-response) and a source. `errorCopy()` returns a title, a message and an action for all 40 combinations. A test walks every combination and rejects vague phrases and messages that give the user nothing to do. It rejected five of my first messages.
+**Typed errors, and a test on the copy.** Every failure becomes an `AppError` with a kind (offline, network, timeout, rate-limited, auth, not-found, provider-down, bad-response) and a source (the weather providers, city search, the reminder server, the browser's own push service). `errorCopy()` returns a title, a message and an action for all 48 combinations. A test walks every combination and rejects vague phrases and messages that give the user nothing to do. It rejected five of my first messages.
 
 **Safe storage.** Everything that touches `localStorage` goes through one wrapper. If storage is blocked or full, the app keeps working from memory and says so. Stored data is never trusted: favourites are versioned and cleaned on every read.
 
@@ -194,16 +194,33 @@ Each of these is recorded with its number in the Decisions section of [docs/PLAN
 
 ## The 300 ms requirement
 
-I measured the time from the last keystroke to the suggestions being painted, in Chromium against the live GeoDB API from Karachi.
+I measured the time from the last keystroke to the city being on screen, in Chromium against the live GeoDB API from Karachi. Each figure is two runs, typing the full name at 80 ms a key (fast) and 250 ms a key (slow). "Before" is the first version I submitted; "after" is the current one.
 
-- A first network answer from GeoDB, including the 150 ms pause: 671 to 1,012 ms, median 821 ms (11 samples).
-- An answer from the session cache or from filtering an earlier result: 4 to 26 ms (4 samples).
-- A matching recent city, shown before any request: 18 to 32 ms (3 samples).
-- Preconnecting to the API on first focus: no measurable gain (895 ms without, 1,012 ms with, one sample each).
+What changed: the first request now goes out at the second letter and is never cancelled. Its page holds the ten largest places for those two letters. While you type on, the matches from that page are shown at once, and the request for the full text adds the rest underneath.
 
-What this means: the 300 ms target is met for anything already seen in the session, for longer prefixes of an earlier result, and whenever a recent city matches. It is not met for the first request for a new city, and I could not make it so – GeoDB alone takes 500 to 800 ms from here. In that case the previous suggestions stay on screen and a spinner appears once the request has run for 150 ms.
+Large cities – in GeoDB's ten largest for their first two letters:
 
-To reproduce: `npm run dev`, type in the search field, then run `performance.getEntriesByName('wb:suggestions')` in the console.
+- Lahore, fast: 752–888 ms before, 181–343 ms after. Slow: 600–610 ms before, already on screen when typing stops after.
+- London, fast: 813–836 ms before, 204–205 ms after. Slow: 650–694 ms before, already on screen after.
+- Karachi, fast: 806–929 ms before, 96–104 ms after. Slow: 1,383–1,612 ms before, already on screen after.
+- Skardu, fast: 738–761 ms before, 164–183 ms after. Slow: 590–740 ms before, already on screen after.
+
+A small town – Murree, not in the ten largest for "Mu":
+
+- Fast: 856–1,473 ms before, 1,274–1,331 ms after.
+- Slow: 701–737 ms before, 1,443–1,509 ms after.
+
+What this means, plainly:
+
+- **Met** for a city that is among the ten largest for its first two letters, once you have typed for about a third of a second past the second letter. I checked 12 cities with real requests (Lahore, Karachi, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, Quetta, London, Paris, New York, Dubai): 11 are in their two-letter page. Paris is the one that is not.
+- **Met** for anything already seen in the session, and whenever a recent city or favourite matches (4–32 ms).
+- **Close, not guaranteed** for a fast typist on a large city: one of my eight fast runs took 343 ms.
+- **Not met, and now slower,** for a place outside its two-letter page. GeoDB allows one request a second, so the request for the full text has to wait a full second after the early one. That costs a small-town search roughly half a second to three quarters of a second more than before. I accepted this trade: most searches are for large cities.
+- **Not met** for a two- or three-letter query typed quickly and left there. The first answer still takes as long as GeoDB takes, about 600–800 ms.
+
+The cost in quota: a new search now uses 2 requests where a fast typist used 1 (the early one and the full text), and 3 for a slow typist on a longer name. Picking a city from the early matches within the first second uses 1. A repeated search uses none.
+
+The preview deployment is behind Vercel's sign-in, so these runs timed the list in the page (last keydown to the city's row appearing) rather than reading the dev-only `wb:suggestions` mark, which does not ship in a production build. To see the mark: `npm run dev`, type in the search field, then run `performance.getEntriesByName('wb:suggestions')` in the console.
 
 ## APIs used
 
@@ -218,7 +235,7 @@ Attribution: weather data by [Open-Meteo](https://open-meteo.com/), licensed und
 ## Known limitations
 
 - **The API keys are visible in the bundle.** The weather and RapidAPI keys ship to the browser, because those calls are client-side. Neither provider supports restricting a key to a site. They are free-tier keys and I will rotate them after the review. A small proxy would fix it.
-- **GeoDB is slow and tightly limited.** A first search for a new city takes most of a second. The 1,000-a-day quota is shared by everyone using the live site. When it runs out, search falls back to Open-Meteo's geocoder, whose matching is looser.
+- **GeoDB is slow and tightly limited.** A large city now appears within about a third of a second of the last key, but a small town takes over a second – see the 300 ms section. The 1,000-a-day quota is shared by everyone using the live site. When it runs out, search falls back to Open-Meteo's geocoder, whose matching is looser.
 - **Reminder timing.** A reminder arrives within 5 minutes after the chosen time, not on the minute. One that would be more than an hour late is skipped. On a desktop the browser must be running, though no tab needs to be open.
 - **iOS only when installed.** Web Push on iPhone and iPad works only for an app added to the Home Screen (iOS 16.4 or later). In a Safari tab the reminder card shows the steps to add it.
 - **Day labels differ on the backup source.** Open-Meteo's daily code is the most severe condition of the day with no threshold, so a day with a trace shower is labelled rain where my own rule would say cloudy. I left it. The header says when the backup served the data.
@@ -230,7 +247,7 @@ Attribution: weather data by [Open-Meteo](https://open-meteo.com/), licensed und
 
 Verified automatically, on every push:
 
-- 839 unit and component tests, against recorded real API responses.
+- 889 unit and component tests, against recorded real API responses.
 - Playwright tests in Chromium at 375 px (touch and mouse), 768 px and 1280 px: layout, touch targets, search, weather, favourites, offline flows, installability through the DevTools protocol, and the reminder card's flows with the server answered by the test.
 
 Verified by me against the live site, in desktop Chromium:
@@ -249,7 +266,7 @@ Verified by me on real devices – a MacBook in Chrome, and an iPhone with the a
 Not verified on a real device:
 
 - Android phones, tablets, and any other desktop browser.
-- Safari and Firefox. The core flows passed once in Playwright's WebKit build, which is not Safari; Firefox was not run.
+- Safari and Firefox. The core flows passed once in Playwright's WebKit build, which is not Safari. Firefox could not be run: Playwright's Firefox build does not start on my machine ("Could not find profile folder"), in two separate attempts.
 - The update prompt between two real deployed versions.
 - A replaced push subscription (`pushsubscriptionchange`).
 - Anything else not listed above. The phone-sized automated tests ran in desktop Chromium, not on a phone.
