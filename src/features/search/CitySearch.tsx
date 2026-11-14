@@ -273,7 +273,7 @@ export function CitySearch({
           autoComplete="off"
           autoCapitalize="words"
           spellCheck={false}
-          placeholder="Search for a city"
+          placeholder="Search cities"
           value={value}
           disabled={!online}
           aria-expanded={listVisible}
