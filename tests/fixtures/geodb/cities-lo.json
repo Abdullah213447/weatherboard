@@ -1,0 +1,172 @@
+{
+  "links": [
+    {
+      "rel": "first",
+      "href": "/v1/geo/cities?offset=0&limit=10&sort=-population&languageCode=en&namePrefix=Lo"
+    },
+    {
+      "rel": "next",
+      "href": "/v1/geo/cities?offset=10&limit=10&sort=-population&languageCode=en&namePrefix=Lo"
+    },
+    {
+      "rel": "last",
+      "href": "/v1/geo/cities?offset=10200&limit=10&sort=-population&languageCode=en&namePrefix=Lo"
+    }
+  ],
+  "data": [
+    {
+      "id": 172136,
+      "wikiDataId": "Q104994",
+      "type": "ADM2",
+      "city": "Los Angeles County",
+      "name": "Los Angeles County",
+      "country": "United States",
+      "countryCode": "US",
+      "region": "California",
+      "regionCode": "CA",
+      "regionWdId": "Q99",
+      "latitude": 34.05,
+      "longitude": -118.25,
+      "population": 10014009
+    },
+    {
+      "id": 3602356,
+      "wikiDataId": "Q23306",
+      "type": "CITY",
+      "city": "Greater London",
+      "name": "Greater London",
+      "country": "United Kingdom",
+      "countryCode": "GB",
+      "region": "England",
+      "regionCode": "ENG",
+      "regionWdId": "Q21",
+      "latitude": 51.52,
+      "longitude": -0.1,
+      "population": 8866180
+    },
+    {
+      "id": 45633,
+      "wikiDataId": "Q84",
+      "type": "CITY",
+      "city": "London",
+      "name": "London",
+      "country": "United Kingdom",
+      "countryCode": "GB",
+      "region": "England",
+      "regionCode": "ENG",
+      "regionWdId": "Q21",
+      "latitude": 51.507222222,
+      "longitude": -0.1275,
+      "population": 8799728
+    },
+    {
+      "id": 3721969,
+      "wikiDataId": "Q1001406",
+      "type": "ADM2",
+      "city": "Longgang District",
+      "name": "Longgang District",
+      "country": "People's Republic of China",
+      "countryCode": "CN",
+      "region": "Guangdong",
+      "regionCode": "GD",
+      "regionWdId": "Q15175",
+      "latitude": 22.72289,
+      "longitude": 114.26326,
+      "population": 4015300
+    },
+    {
+      "id": 3855177,
+      "wikiDataId": "Q65",
+      "type": "CITY",
+      "city": "Los Angeles",
+      "name": "Los Angeles",
+      "country": "United States",
+      "countryCode": "US",
+      "region": "California",
+      "regionCode": "CA",
+      "regionWdId": "Q99",
+      "latitude": 34.05223,
+      "longitude": -118.24368,
+      "population": 3898747
+    },
+    {
+      "id": 14360,
+      "wikiDataId": "Q416988",
+      "type": "CITY",
+      "city": "Loudi",
+      "name": "Loudi",
+      "country": "People's Republic of China",
+      "countryCode": "CN",
+      "region": "Hunan",
+      "regionCode": "HN",
+      "regionWdId": "Q45761",
+      "latitude": 27.73444,
+      "longitude": 111.99444,
+      "population": 3826996
+    },
+    {
+      "id": 3705295,
+      "wikiDataId": "Q68862",
+      "type": "CITY",
+      "city": "Longyan",
+      "name": "Longyan",
+      "country": "People's Republic of China",
+      "countryCode": "CN",
+      "region": "Fujian",
+      "regionCode": "FJ",
+      "regionWdId": "Q41705",
+      "latitude": 25.088056,
+      "longitude": 117.024444,
+      "population": 2723637
+    },
+    {
+      "id": 3853493,
+      "wikiDataId": "Q206489",
+      "type": "ADM2",
+      "city": "Lower Mainland",
+      "name": "Lower Mainland",
+      "country": "Canada",
+      "countryCode": "CA",
+      "region": "British Columbia",
+      "regionCode": "BC",
+      "regionWdId": "Q1973",
+      "latitude": 49.083333333,
+      "longitude": -122.35,
+      "population": 2524113
+    },
+    {
+      "id": 3705800,
+      "wikiDataId": "Q519810",
+      "type": "CITY",
+      "city": "Longnan",
+      "name": "Longnan",
+      "country": "People's Republic of China",
+      "countryCode": "CN",
+      "region": "Gansu",
+      "regionCode": "GS",
+      "regionWdId": "Q42392",
+      "latitude": 33.535,
+      "longitude": 105.349,
+      "population": 2407272
+    },
+    {
+      "id": 107214,
+      "wikiDataId": "Q3792",
+      "type": "CITY",
+      "city": "Lomé",
+      "name": "Lomé",
+      "country": "Togo",
+      "countryCode": "TG",
+      "region": "Maritime",
+      "regionCode": "M",
+      "regionWdId": "Q316291",
+      "latitude": 6.13,
+      "longitude": 1.215833333,
+      "population": 2188376
+    }
+  ],
+  "metadata": {
+    "currentOffset": 0,
+    "totalCount": 10203
+  }
+}

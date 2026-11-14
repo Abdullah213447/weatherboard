@@ -1,0 +1,172 @@
+{
+  "links": [
+    {
+      "rel": "first",
+      "href": "/v1/geo/cities?offset=0&limit=10&namePrefix=La&sort=-population&languageCode=en"
+    },
+    {
+      "rel": "next",
+      "href": "/v1/geo/cities?offset=10&limit=10&namePrefix=La&sort=-population&languageCode=en"
+    },
+    {
+      "rel": "last",
+      "href": "/v1/geo/cities?offset=25620&limit=10&namePrefix=La&sort=-population&languageCode=en"
+    }
+  ],
+  "data": [
+    {
+      "id": 3002763,
+      "wikiDataId": "Q3308170",
+      "type": "ADM2",
+      "city": "Lahore Division",
+      "name": "Lahore Division",
+      "country": "Pakistan",
+      "countryCode": "PK",
+      "region": "Punjab",
+      "regionCode": "PB",
+      "regionWdId": "Q4478",
+      "latitude": 31.16666667,
+      "longitude": 74.5,
+      "population": 19581281
+    },
+    {
+      "id": 82318,
+      "wikiDataId": "Q8673",
+      "type": "CITY",
+      "city": "Lagos",
+      "name": "Lagos",
+      "country": "Nigeria",
+      "countryCode": "NG",
+      "region": "Lagos State",
+      "regionCode": "LA",
+      "regionWdId": "Q815913",
+      "latitude": 6.456111111,
+      "longitude": 3.393611111,
+      "population": 15070000
+    },
+    {
+      "id": 3431471,
+      "wikiDataId": "Q2315527",
+      "type": "ADM2",
+      "city": "Lahore District",
+      "name": "Lahore District",
+      "country": "Pakistan",
+      "countryCode": "PK",
+      "region": "Punjab",
+      "regionCode": "PB",
+      "regionWdId": "Q4478",
+      "latitude": 31.416666666,
+      "longitude": 74.333333333,
+      "population": 12978661
+    },
+    {
+      "id": 3713665,
+      "wikiDataId": "Q58710",
+      "type": "CITY",
+      "city": "Langfang",
+      "name": "Langfang",
+      "country": "People's Republic of China",
+      "countryCode": "CN",
+      "region": "Hebei",
+      "regionCode": "HE",
+      "regionWdId": "Q21208",
+      "latitude": 39.51962,
+      "longitude": 116.70056,
+      "population": 5464087
+    },
+    {
+      "id": 3705972,
+      "wikiDataId": "Q183584",
+      "type": "CITY",
+      "city": "Lanzhou",
+      "name": "Lanzhou",
+      "country": "People's Republic of China",
+      "countryCode": "CN",
+      "region": "Gansu",
+      "regionCode": "GS",
+      "regionWdId": "Q42392",
+      "latitude": 36.06171,
+      "longitude": 103.83177,
+      "population": 4359446
+    },
+    {
+      "id": 3325142,
+      "wikiDataId": "Q1755447",
+      "type": "ADM2",
+      "city": "Lakhimpur Kheri district",
+      "name": "Lakhimpur Kheri district",
+      "country": "India",
+      "countryCode": "IN",
+      "region": "Uttar Pradesh",
+      "regionCode": "UP",
+      "regionWdId": "Q1498",
+      "latitude": 27.95,
+      "longitude": 80.77,
+      "population": 4021243
+    },
+    {
+      "id": 7032,
+      "wikiDataId": "Q170688",
+      "type": "CITY",
+      "city": "Santa Cruz de la Sierra",
+      "name": "Santa Cruz de la Sierra",
+      "country": "Bolivia",
+      "countryCode": "BO",
+      "region": "Santa Cruz Department",
+      "regionCode": "S",
+      "regionWdId": "Q235106",
+      "latitude": -17.789166666,
+      "longitude": -63.1975,
+      "population": 3122605
+    },
+    {
+      "id": 3224319,
+      "wikiDataId": "Q1948713",
+      "type": "ADM2",
+      "city": "Latur district",
+      "name": "Latur district",
+      "country": "India",
+      "countryCode": "IN",
+      "region": "Maharashtra",
+      "regionCode": "MH",
+      "regionWdId": "Q1191",
+      "latitude": 18.4,
+      "longitude": 76.58,
+      "population": 2454196
+    },
+    {
+      "id": 14426,
+      "wikiDataId": "Q572140",
+      "type": "CITY",
+      "city": "Laibin",
+      "name": "Laibin",
+      "country": "People's Republic of China",
+      "countryCode": "CN",
+      "region": "Guangxi",
+      "regionCode": "GX",
+      "regionWdId": "Q15176",
+      "latitude": 23.733333333,
+      "longitude": 109.233333333,
+      "population": 2074611
+    },
+    {
+      "id": 133503,
+      "wikiDataId": "Q1550252",
+      "type": "ADM2",
+      "city": "Lakshmipur District",
+      "name": "Lakshmipur District",
+      "country": "Bangladesh",
+      "countryCode": "BD",
+      "region": "Chattogram Division",
+      "regionCode": "B",
+      "regionWdId": "Q158087",
+      "latitude": 22.95,
+      "longitude": 90.825,
+      "population": 1937948
+    }
+  ],
+  "metadata": {
+    "currentOffset": 0,
+    "totalCount": 25629
+  }
+}

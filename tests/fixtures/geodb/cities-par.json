@@ -1,0 +1,172 @@
+{
+  "links": [
+    {
+      "rel": "first",
+      "href": "/v1/geo/cities?offset=0&limit=10&namePrefix=Par&sort=-population&languageCode=en"
+    },
+    {
+      "rel": "next",
+      "href": "/v1/geo/cities?offset=10&limit=10&namePrefix=Par&sort=-population&languageCode=en"
+    },
+    {
+      "rel": "last",
+      "href": "/v1/geo/cities?offset=5540&limit=10&namePrefix=Par&sort=-population&languageCode=en"
+    }
+  ],
+  "data": [
+    {
+      "id": 147877,
+      "wikiDataId": "Q338425",
+      "type": "ADM2",
+      "city": "North 24 Parganas district",
+      "name": "North 24 Parganas district",
+      "country": "India",
+      "countryCode": "IN",
+      "region": "West Bengal",
+      "regionCode": "WB",
+      "regionWdId": "Q1356",
+      "latitude": 22.716666666,
+      "longitude": 88.483333333,
+      "population": 10009781
+    },
+    {
+      "id": 147894,
+      "wikiDataId": "Q2308319",
+      "type": "ADM2",
+      "city": "South 24 Parganas district",
+      "name": "South 24 Parganas district",
+      "country": "India",
+      "countryCode": "IN",
+      "region": "West Bengal",
+      "regionCode": "WB",
+      "regionWdId": "Q1356",
+      "latitude": 22.5264928,
+      "longitude": 88.3323692,
+      "population": 8161961
+    },
+    {
+      "id": 144571,
+      "wikiDataId": "Q90",
+      "type": "CITY",
+      "city": "Paris",
+      "name": "Paris",
+      "country": "France",
+      "countryCode": "FR",
+      "region": "Île-de-France",
+      "regionCode": "IDF",
+      "regionWdId": "Q13917",
+      "latitude": 48.856666666,
+      "longitude": 2.352222222,
+      "population": 2103778
+    },
+    {
+      "id": 132245,
+      "wikiDataId": "Q1308616",
+      "type": "ADM2",
+      "city": "La Matanza Partido",
+      "name": "La Matanza Partido",
+      "country": "Argentina",
+      "countryCode": "AR",
+      "region": "Buenos Aires Province",
+      "regionCode": "B",
+      "regionWdId": "Q44754",
+      "latitude": -34.716666666,
+      "longitude": -58.633333333,
+      "population": 1841247
+    },
+    {
+      "id": 3311612,
+      "wikiDataId": "Q1797389",
+      "type": "ADM2",
+      "city": "Parbhani district",
+      "name": "Parbhani district",
+      "country": "India",
+      "countryCode": "IN",
+      "region": "Maharashtra",
+      "regionCode": "MH",
+      "regionWdId": "Q1191",
+      "latitude": 19.5,
+      "longitude": 76.75,
+      "population": 1836086
+    },
+    {
+      "id": 3840700,
+      "wikiDataId": "Q110714856",
+      "type": "ADM2",
+      "city": "Parvathipuram Manyam district",
+      "name": "Parvathipuram Manyam district",
+      "country": "India",
+      "countryCode": "IN",
+      "region": "Andhra Pradesh",
+      "regionCode": "AP",
+      "regionWdId": "Q1159",
+      "latitude": 18.75036,
+      "longitude": 83.54053,
+      "population": 925340
+    },
+    {
+      "id": 3650910,
+      "wikiDataId": "Q260600",
+      "type": "ADM2",
+      "city": "La Plata Partido",
+      "name": "La Plata Partido",
+      "country": "Argentina",
+      "countryCode": "AR",
+      "region": "Buenos Aires Province",
+      "regionCode": "B",
+      "regionWdId": "Q44754",
+      "latitude": -35.0,
+      "longitude": -58.0,
+      "population": 768547
+    },
+    {
+      "id": 3344524,
+      "wikiDataId": "Q1026627",
+      "type": "CITY",
+      "city": "Parachinar",
+      "name": "Parachinar",
+      "country": "Pakistan",
+      "countryCode": "PK",
+      "region": "Khyber Pakhtunkhwa",
+      "regionCode": "KP",
+      "regionWdId": "Q183314",
+      "latitude": 33.899166666,
+      "longitude": 70.100833333,
+      "population": 700000
+    },
+    {
+      "id": 3686863,
+      "wikiDataId": "Q14638682",
+      "type": "ADM2",
+      "city": "Lomas de Zamora Partido",
+      "name": "Lomas de Zamora Partido",
+      "country": "Argentina",
+      "countryCode": "AR",
+      "region": "Buenos Aires Province",
+      "regionCode": "B",
+      "regionWdId": "Q44754",
+      "latitude": -34.76666667,
+      "longitude": -58.4,
+      "population": 690323
+    },
+    {
+      "id": 132275,
+      "wikiDataId": "Q671742",
+      "type": "ADM2",
+      "city": "General Pueyrredón Partido",
+      "name": "General Pueyrredón Partido",
+      "country": "Argentina",
+      "countryCode": "AR",
+      "region": "Buenos Aires Province",
+      "regionCode": "B",
+      "regionWdId": "Q44754",
+      "latitude": -38.003333333,
+      "longitude": -57.552777777,
+      "population": 667082
+    }
+  ],
+  "metadata": {
+    "currentOffset": 0,
+    "totalCount": 5544
+  }
+}

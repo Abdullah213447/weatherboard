@@ -10,6 +10,7 @@ import {
   matchesPrefix,
   type CityCandidate,
 } from './cities';
+import { pageFromGeoDb } from '@/test/cities';
 import type { City } from './weather';
 
 const karachi: City = {
@@ -171,5 +172,56 @@ describe('?city= parameter', () => {
     ['~Sindh~PK~24.86~67.01'],
   ])('rejects %j', (value) => {
     expect(decodeCityParam(value)).toBeNull();
+  });
+});
+
+describe('ranking by where the match is', () => {
+  const names = async (fixture: 'par' | 'laho' | 'lond', query: string, limit = 10) =>
+    cleanCities((await pageFromGeoDb(fixture)).candidates, limit, query).map((city) => city.name);
+
+  it('puts Paris first for "Par", ahead of larger places that match on a later word', async () => {
+    // GeoDB's own order starts with North and South 24 Parganas, both more populous than Paris.
+    expect(await names('par', 'Par')).toEqual([
+      'Paris',
+      'Parbhani',
+      'Parvathipuram Manyam',
+      'Parachinar',
+      'North 24 Parganas',
+      'South 24 Parganas',
+      'La Matanza Partido',
+      'La Plata Partido',
+      'Lomas de Zamora Partido',
+      'General Pueyrredón Partido',
+    ]);
+  });
+
+  it('keeps population order inside each group', async () => {
+    const withoutQuery = cleanCities((await pageFromGeoDb('par')).candidates, 10).map(
+      (c) => c.name,
+    );
+    const ranked = await names('par', 'Par');
+    const starts = (name: string) => name.startsWith('Par');
+    expect(ranked.filter(starts)).toEqual(withoutQuery.filter(starts));
+    expect(ranked.filter((name) => !starts(name))).toEqual(
+      withoutQuery.filter((name) => !starts(name)),
+    );
+  });
+
+  it('still leads with Lahore for "Laho", and moves only the later-word match down', async () => {
+    const ranked = await names('laho', 'Laho');
+    expect(ranked[0]).toBe('Lahore');
+    expect(ranked.at(-1)).toBe('Grand-Lahou');
+    expect(ranked.slice(0, -1).every((name) => name.startsWith('Laho'))).toBe(true);
+  });
+
+  it('still leads with London for "Lond", and moves East London and New London down', async () => {
+    const ranked = await names('lond', 'Lond');
+    expect(ranked[0]).toBe('London');
+    expect(ranked.slice(-2)).toEqual(['East London', 'New London']);
+  });
+
+  it('changes nothing when no query is given', async () => {
+    const page = await pageFromGeoDb('lond');
+    expect(cleanCities(page.candidates, 6, '')).toEqual(cleanCities(page.candidates, 6));
   });
 });

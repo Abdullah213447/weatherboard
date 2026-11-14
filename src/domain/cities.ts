@@ -112,8 +112,12 @@ function isSamePlace(a: Ranked, b: Ranked): boolean {
 /**
  * Turns raw search hits into the list shown to the user: one entry per
  * place, named plainly, in the provider's order (largest first).
+ *
+ * With a `query`, names that start with it come before names that only match
+ * on a later word ("Paris" before "North 24 Parganas" for "Par"). The
+ * provider's order is kept inside each group.
  */
-export function cleanCities(candidates: readonly CityCandidate[], limit = 6): City[] {
+export function cleanCities(candidates: readonly CityCandidate[], limit = 6, query = ''): City[] {
   const kept: Ranked[] = [];
   for (const candidate of candidates) {
     const next = rank(candidate);
@@ -121,11 +125,24 @@ export function cleanCities(candidates: readonly CityCandidate[], limit = 6): Ci
     if (existing === -1) {
       kept.push(next);
     } else if (next.preference > (kept[existing]?.preference ?? 0)) {
-      // A better name for a place already listed takes over its position.
       kept[existing] = next;
     }
   }
-  return kept.slice(0, limit).map((entry) => entry.city);
+  const target = normalizeName(query);
+  const ordered =
+    target === ''
+      ? kept
+      : [
+          ...kept.filter((entry) => entry.comparable.startsWith(target)),
+          ...kept.filter((entry) => !entry.comparable.startsWith(target)),
+        ];
+  return ordered.slice(0, limit).map((entry) => entry.city);
+}
+
+/** True when the name itself, not a later word of it, starts with `query`. */
+export function nameStartsWith(name: string, query: string): boolean {
+  const target = normalizeName(query);
+  return target !== '' && normalizeName(name).startsWith(target);
 }
 
 /** A country's flag as an emoji, built from its two-letter code. Empty if the code is not one. */

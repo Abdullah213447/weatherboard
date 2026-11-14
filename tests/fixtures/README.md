@@ -11,6 +11,9 @@ All city searches use `GET /v1/geo/cities?namePrefix={prefix}&limit=10&sort=-pop
 | `geodb/cities-laho.json`                  | `Laho`                                | 200    | Lahore exists only as "Lahore Division" and "Lahore District"; Laholm appears three times |
 | `geodb/cities-lond.json`                  | `Lond`                                | 200    | "Greater London" outranks London; Londrina appears twice                                  |
 | `geodb/cities-kara.json`                  | `Kara`                                | 200    | "Karaj County" and Karaj are the same place                                               |
+| `geodb/cities-par.json`                   | `Par`                                 | 200    | Two Parganas districts outrank Paris by population; they match on a later word            |
+| `geodb/cities-la.json`                    | `La`                                  | 200    | The two-letter page the early request fetches; holds both Lahore records                  |
+| `geodb/cities-lo.json`                    | `Lo`                                  | 200    | The two-letter page for London: "Greater London" and London are both in it                |
 | `geodb/cities-no-results.json`            | `Zzqxv`                               | 200    | An empty result is a 200 with `data: []`                                                  |
 | `geodb/cities-prefix-laho-type-city.json` | `Laho`, with `limit=6&types=CITY`     | 200    | Kept as evidence: with the city filter Lahore is absent                                   |
 | `geodb/rate-limited-429.json`             | Second of three simultaneous requests | 429    | The per-second limit's body                                                               |
