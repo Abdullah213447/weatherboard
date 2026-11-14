@@ -129,7 +129,8 @@ export function CitySearch({
   const lastInputAt = useRef(0);
   const instantCount = instant.length;
   useEffect(() => {
-    if (import.meta.env.DEV && status === 'results' && timing) markSuggestionsPainted(timing);
+    const painted = status === 'results' || timing?.origin === 'cached-prefix';
+    if (import.meta.env.DEV && painted && timing) markSuggestionsPainted(timing);
   }, [status, timing]);
   useEffect(() => {
     if (import.meta.env.DEV && instantCount > 0) {

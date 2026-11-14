@@ -1,4 +1,5 @@
 import type { CitySearchPage, CitySource } from '@/api/geodb';
+import { cleanCities } from '@/domain/cities';
 import { AppError, type AppErrorKind } from '@/domain/errors';
 import { pageFromGeoDb } from '@/test/cities';
 import { createCitySearcher } from './citySearcher';
@@ -6,6 +7,8 @@ import { createCitySearcher } from './citySearcher';
 const laho = await pageFromGeoDb('laho');
 const lond = await pageFromGeoDb('lond');
 const none = await pageFromGeoDb('none');
+const la = await pageFromGeoDb('la');
+const lo = await pageFromGeoDb('lo');
 
 function setup(primaryImpl: CitySource, options: { minIntervalMs?: number } = {}) {
   const primary = vi.fn(primaryImpl);
@@ -185,5 +188,154 @@ describe('backup geocoder', () => {
     await searcher.search('Lond');
 
     expect(primary).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('early request and early matches', () => {
+  /** A primary whose requests stay pending until the test settles them. */
+  function manualPrimary() {
+    const calls: {
+      query: string;
+      signal: AbortSignal | undefined;
+      resolve: (page: CitySearchPage) => void;
+      reject: (reason: unknown) => void;
+    }[] = [];
+    const impl: CitySource = (query, signal) =>
+      new Promise<CitySearchPage>((resolve, reject) => {
+        calls.push({ query, signal, resolve, reject });
+      });
+    return { impl, calls };
+  }
+
+  it('warm sends a request at once, with nothing that can cancel it', () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl, { minIntervalMs: 1000 });
+
+    expect(searcher.warm?.('La')).toBeInstanceOf(Promise);
+
+    expect(calls.map((call) => call.query)).toEqual(['La']);
+    expect(calls[0]?.signal).toBeUndefined();
+  });
+
+  it('warm does nothing when the answer is known, already on its way, or inside the spacing window', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl, { minIntervalMs: 1000 });
+
+    void searcher.warm?.('La');
+    expect(searcher.warm?.('la ')).toBeNull();
+    expect(searcher.warm?.('Lo')).toBeNull();
+    calls[0]?.resolve(la);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(searcher.warm?.('La')).toBeNull();
+
+    expect(calls).toHaveLength(1);
+  });
+
+  it('offers the matches from a shorter page that are certain to lead the full answer', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl);
+
+    expect(searcher.partial?.('Laho')).toBeNull();
+    const warmed = searcher.warm?.('La');
+    calls[0]?.resolve(la);
+    await warmed;
+
+    const early = searcher.partial?.('Laho');
+    expect(early?.origin).toBe('cached-prefix');
+    // "Lahore Division" and "Lahore District" in the recorded page are one place.
+    expect(early?.cities.map((city) => city.name)).toEqual(['Lahore']);
+    // The full answer for the same text starts with the same city.
+    expect(cleanCities(laho.candidates, 6, 'Laho')[0]).toEqual(early?.cities[0]);
+  });
+
+  it('offers London from the recorded "Lo" page, as the city and not as Greater London', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl);
+    const warmed = searcher.warm?.('Lo');
+    calls[0]?.resolve(lo);
+    await warmed;
+
+    expect(searcher.partial?.('Lond')?.cities.map((city) => city.name)).toEqual(['London']);
+    expect(cleanCities(lond.candidates, 6, 'Lond')[0]?.id).toBe(
+      searcher.partial?.('Lond')?.cities[0]?.id,
+    );
+  });
+
+  it('never offers a later-word match early, because a larger name match could outrank it', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl);
+    const warmed = searcher.warm?.('La');
+    calls[0]?.resolve(la);
+    await warmed;
+
+    // "Santa Cruz de la Sierra" is in the page and matches "la" on a later word only.
+    expect(searcher.partial?.('Sie')).toBeNull();
+    expect(searcher.partial?.('Lag')?.cities.map((city) => city.name)).toEqual(['Lagos']);
+  });
+
+  it('a search for the text being warmed joins that request and does not send another', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl, { minIntervalMs: 1000 });
+
+    void searcher.warm?.('La');
+    const searching = searcher.search('La', new AbortController().signal);
+    calls[0]?.resolve(la);
+
+    expect((await searching).cities[0]?.name).toBe('Lahore');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('abandoning a search that joined a warm request leaves the request running, and it still fills the cache', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl, { minIntervalMs: 1000 });
+    const abort = new AbortController();
+
+    void searcher.warm?.('La');
+    const searching = searcher.search('La', abort.signal);
+    abort.abort();
+    await expect(searching).rejects.toMatchObject({ name: 'AbortError' });
+    calls[0]?.resolve(la);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(searcher.peek?.('La')?.origin).toBe('cache');
+  });
+
+  it('sends the full-text request the moment the one-second spacing allows, measured from the warm request', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl, { minIntervalMs: 1000 });
+
+    void searcher.warm?.('La');
+    await vi.advanceTimersByTimeAsync(400);
+    void searcher.search('Lahore');
+    await vi.advanceTimersByTimeAsync(599);
+    expect(calls).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(calls.map((call) => call.query)).toEqual(['La', 'Lahore']);
+  });
+
+  it('skips the full-text request when the warm page turns out to hold every match', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher } = setup(impl, { minIntervalMs: 1000 });
+
+    void searcher.warm?.('La');
+    const searching = searcher.search('Lah');
+    calls[0]?.resolve({ ...la, complete: true });
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect((await searching).origin).toBe('local-filter');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('a warm request that is rate limited sends a joined search to the backup geocoder', async () => {
+    const { impl, calls } = manualPrimary();
+    const { searcher, fallback } = setup(impl, { minIntervalMs: 1000 });
+
+    void searcher.warm?.('Lo');
+    const searching = searcher.search('Lo');
+    calls[0]?.reject(new AppError('rate-limited', 'geodb'));
+
+    expect((await searching).servedBy).toBe('open-meteo');
+    expect(fallback).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,7 +1,8 @@
 import { AppError } from '@/domain/errors';
 import { cleanCities } from '@/domain/cities';
 import { pageFromGeoDb } from '@/test/cities';
-import type { CitySearcher, SearchOutcome } from './citySearcher';
+import type { CitySearchPage, CitySource } from '@/api/geodb';
+import { createCitySearcher, type CitySearcher, type SearchOutcome } from './citySearcher';
 import { createSearchController } from './searchController';
 
 const lahoCities = cleanCities((await pageFromGeoDb('laho')).candidates);
@@ -316,5 +317,175 @@ describe('submit, retry and reset', () => {
 
     expect(calls).toHaveLength(0);
     expect(controller.getState().status).toBe('idle');
+  });
+});
+
+describe('early request, with the real request engine and recorded pages', () => {
+  type Call = {
+    query: string;
+    signal: AbortSignal | undefined;
+    resolve: (page: CitySearchPage) => void;
+    reject: (reason: unknown) => void;
+  };
+
+  async function setup() {
+    const pages = { la: await pageFromGeoDb('la'), laho: await pageFromGeoDb('laho') };
+    const calls: Call[] = [];
+    const primary: CitySource = (query, signal) =>
+      new Promise<CitySearchPage>((resolve, reject) => {
+        calls.push({ query, signal, resolve, reject });
+      });
+    const fallback = vi.fn<CitySource>(() =>
+      Promise.reject(new AppError('provider-down', 'geodb')),
+    );
+    const searcher = createCitySearcher({ primary, fallback, now: () => Date.now() });
+    const controller = createSearchController({ searcher, clock: () => Date.now() });
+    const names = () => controller.getState().cities.map((city) => city.name);
+    return { controller, calls, pages, names, fallback };
+  }
+
+  /** Types `text` one letter at a time, `gapMs` apart, starting from `from` letters. */
+  async function type(
+    controller: ReturnType<typeof createSearchController>,
+    text: string,
+    gapMs: number,
+    from = 1,
+  ) {
+    for (let length = from; length <= text.length; length += 1) {
+      controller.setQuery(text.slice(0, length));
+      if (length < text.length) await vi.advanceTimersByTimeAsync(gapMs);
+    }
+  }
+
+  it('sends the first request at the second letter, without waiting for a pause', async () => {
+    const { controller, calls } = await setup();
+
+    controller.setQuery('L');
+    expect(calls).toHaveLength(0);
+    controller.setQuery('La');
+
+    expect(calls.map((call) => call.query)).toEqual(['La']);
+  });
+
+  it('does not cancel that request when the user types on', async () => {
+    const { controller, calls } = await setup();
+
+    await type(controller, 'Lahore', 80);
+
+    expect(calls.map((call) => call.query)).toEqual(['La']);
+    expect(calls[0]?.signal).toBeUndefined();
+  });
+
+  it('a pause on two letters is answered by that same request, not a second one', async () => {
+    const { controller, calls, pages } = await setup();
+
+    controller.setQuery('La');
+    await vi.advanceTimersByTimeAsync(400);
+    expect(controller.getState().status).toBe('searching');
+    call(calls, 0).resolve(pages.la);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(calls).toHaveLength(1);
+    expect(controller.getState()).toMatchObject({ status: 'results', query: 'La' });
+  });
+
+  it('shows the matches from the two-letter page the moment it lands, for the text typed since', async () => {
+    const { controller, calls, pages, names } = await setup();
+
+    await type(controller, 'Laho', 80);
+    expect(names()).toEqual([]);
+    call(calls, 0).resolve(pages.la);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(names()).toEqual(['Lahore']);
+    expect(controller.getState().timing?.origin).toBe('cached-prefix');
+    expect(controller.getState().query).toBe('Laho');
+  });
+
+  it('shows them at once on each later keystroke, with no pause and no request', async () => {
+    const { controller, calls, pages, names } = await setup();
+
+    controller.setQuery('La');
+    call(calls, 0).resolve(pages.la);
+    await vi.advanceTimersByTimeAsync(0);
+    controller.setQuery('Lah');
+
+    expect(names()).toEqual(['Lahore']);
+    expect(controller.getState().timing?.origin).toBe('cached-prefix');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('sends the full-text request when the one-second spacing allows, and only for the latest text', async () => {
+    const { controller, calls, pages } = await setup();
+
+    // Typing finishes 160 ms after the second letter and the pause ends at 310 ms,
+    // but the request has to wait until a full second after the first one.
+    await type(controller, 'Laho', 80, 2);
+    call(calls, 0).resolve(pages.la);
+    await vi.advanceTimersByTimeAsync(839);
+    expect(calls).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(calls.map((entry) => entry.query)).toEqual(['La', 'Laho']);
+  });
+
+  it('adds the full answer beneath the early matches without moving them', async () => {
+    const { controller, calls, pages, names } = await setup();
+
+    await type(controller, 'Laho', 80, 2);
+    call(calls, 0).resolve(pages.la);
+    await vi.advanceTimersByTimeAsync(1000);
+    const early = controller.getState().cities;
+    expect(names()).toEqual(['Lahore']);
+    call(calls, 1).resolve(pages.laho);
+    await vi.advanceTimersByTimeAsync(0);
+
+    const state = controller.getState();
+    expect(state.status).toBe('results');
+    expect(state.cities[0]).toBe(early[0]);
+    expect(names()).toEqual(['Lahore', 'Lahojsk', 'Laholm', 'Lahouaza', 'Grand-Lahou']);
+    expect(new Set(state.cities.map((city) => city.id)).size).toBe(state.cities.length);
+  });
+
+  it('keeps the early matches if the full-text request then fails', async () => {
+    const { controller, calls, pages, names } = await setup();
+
+    await type(controller, 'Laho', 80, 2);
+    call(calls, 0).resolve(pages.la);
+    await vi.advanceTimersByTimeAsync(1000);
+    call(calls, 1).reject(new AppError('rate-limited', 'geodb'));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(controller.getState()).toMatchObject({ status: 'results', error: null });
+    expect(names()).toEqual(['Lahore']);
+  });
+
+  it('latest text still wins: a text replaced while waiting its turn is never requested', async () => {
+    const { controller, calls, pages } = await setup();
+
+    await type(controller, 'Lak', 80, 2);
+    call(calls, 0).resolve(pages.la);
+    await vi.advanceTimersByTimeAsync(500);
+    controller.setQuery('Laho');
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(calls.map((entry) => entry.query)).toEqual(['La', 'Laho']);
+  });
+
+  it('a failed early request changes nothing: the pause and the 429 path work as before', async () => {
+    const { controller, calls, fallback } = await setup();
+
+    await type(controller, 'Laho', 80, 2);
+    call(calls, 0).reject(new AppError('rate-limited', 'geodb'));
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(calls.map((entry) => entry.query)).toEqual(['La', 'Laho']);
+    call(calls, 1).reject(new AppError('rate-limited', 'geodb'));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(fallback).toHaveBeenCalledTimes(1);
+    expect(controller.getState()).toMatchObject({
+      status: 'error',
+      error: { kind: 'rate-limited' },
+    });
   });
 });

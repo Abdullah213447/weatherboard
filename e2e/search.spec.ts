@@ -6,6 +6,8 @@ const fixture = (name: string): string =>
 
 /** Recorded GeoDB bodies, chosen by the prefix being searched. */
 const RESPONSES: Record<string, string> = {
+  la: fixture('cities-la'),
+  lo: fixture('cities-lo'),
   laho: fixture('cities-laho'),
   lond: fixture('cities-lond'),
   kara: fixture('cities-kara'),
@@ -18,7 +20,10 @@ async function interceptGeoDb(page: Page): Promise<{ requests: string[] }> {
   await page.route('https://wft-geo-db.p.rapidapi.com/**', async (route) => {
     const prefix = new URL(route.request().url()).searchParams.get('namePrefix') ?? '';
     seen.requests.push(prefix);
-    const key = Object.keys(RESPONSES).find((name) => prefix.toLowerCase().startsWith(name));
+    // The longest recorded prefix that the request starts with: "Laho" gets its own page, "La" the two-letter one.
+    const key = Object.keys(RESPONSES)
+      .filter((name) => prefix.toLowerCase().startsWith(name))
+      .sort((a, b) => b.length - a.length)[0];
     await route.fulfill({
       contentType: 'application/json',
       body: key ? (RESPONSES[key] ?? NO_RESULTS) : NO_RESULTS,
@@ -92,19 +97,28 @@ test('a suggested-city chip runs a search and selects the top match', async ({ p
   expect(geodb.requests).toEqual(['Karachi']);
 });
 
-test('fast typing sends one request, and a repeated query sends none', async ({ page }) => {
+test('typing sends an early request at two letters and one for the full text, and a repeated query sends none', async ({
+  page,
+}) => {
   const geodb = await interceptGeoDb(page);
   await page.goto('/');
   const search = page.getByRole('combobox', { name: 'Search for a city' });
+  const options = page.getByRole('option');
 
   await search.pressSequentially('Laho', { delay: 30 });
-  await expect(page.getByRole('option').first()).toContainText('Lahore');
-  expect(geodb.requests).toEqual(['Laho']);
+  // Lahore comes from the two-letter page, before the request for "Laho" may be sent.
+  await expect(options.first()).toContainText('Lahore');
+  expect(geodb.requests).toEqual(['La']);
+
+  // The full answer is added underneath a second after the first request; Lahore does not move.
+  await expect(options).toHaveCount(5);
+  await expect(options.first()).toContainText('Lahore');
+  expect(geodb.requests).toEqual(['La', 'Laho']);
 
   await search.fill('');
   await search.pressSequentially('Laho', { delay: 30 });
-  await expect(page.getByRole('option').first()).toContainText('Lahore');
-  expect(geodb.requests).toEqual(['Laho']);
+  await expect(options).toHaveCount(5);
+  expect(geodb.requests).toEqual(['La', 'Laho']);
 });
 
 test('no match and a too-short entry each explain themselves', async ({ page }) => {
