@@ -46,6 +46,11 @@ const SUBJECT: Record<AppErrorSource, { name: string; capitalized: string; still
     capitalized: 'The reminder service',
     stillWorks: 'Everything else in the app keeps working.',
   },
+  'browser-push': {
+    name: 'this browser’s notification service',
+    capitalized: 'This browser’s notification service',
+    stillWorks: 'Everything else in the app keeps working.',
+  },
 };
 
 const RETRY: ErrorAction = { label: 'Try again', intent: 'retry' };
@@ -87,6 +92,13 @@ const OVERRIDES: Partial<Record<`${AppErrorSource}:${AppErrorKind}`, ErrorCopy>>
     title: 'Reminders could not be turned on',
     message:
       'The reminder service refused this browser’s subscription. Turn the reminder off and on again to create a fresh one.',
+    action: OK,
+  },
+  // The browser refused or failed to create a subscription; nothing reached our server.
+  'browser-push:provider-down': {
+    title: 'This browser could not set up notifications',
+    message:
+      'The browser did not give WeatherBoard a notification subscription, so no reminder was saved. This happens in private windows and when the browser’s push service is switched off or blocked. Open WeatherBoard in a normal window and turn the reminder on again.',
     action: OK,
   },
   'push:not-found': {

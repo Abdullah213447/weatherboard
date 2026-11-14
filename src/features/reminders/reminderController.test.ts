@@ -1,3 +1,4 @@
+import { errorCopy } from '@/domain/errorCopy';
 import { AppError } from '@/domain/errors';
 import { createReminderController } from './reminderController';
 import { createTestEnv, karachiSettings, subscription } from './testEnv';
@@ -200,7 +201,26 @@ describe('turning on', () => {
 
     await controller.enable(choice);
 
-    expect(controller.getState()).toMatchObject({ status: 'off', error: { source: 'push' } });
+    expect(controller.getState()).toMatchObject({
+      status: 'off',
+      error: { source: 'browser-push', kind: 'provider-down' },
+    });
+  });
+
+  it('describes that as the browser’s failure, not as a bad reply from the reminder service', async () => {
+    const { env, world } = createTestEnv();
+    env.subscribe = () => Promise.reject(new DOMException('Registration failed', 'AbortError'));
+    const controller = createReminderController(env);
+
+    await controller.enable(choice);
+
+    const { error } = controller.getState();
+    if (!error) throw new Error('Expected an error.');
+    const copy = errorCopy(error);
+    expect(copy.title).toBe('This browser could not set up notifications');
+    expect(copy.message).toMatch(/normal window/);
+    expect(copy.message).not.toMatch(/reminder service/);
+    expect(world.stored).toBeNull();
   });
 });
 

@@ -30,7 +30,10 @@ export const APP_ERROR_SOURCES = [
   'openweathermap',
   'open-meteo',
   'geodb',
+  /** The reminder server. */
   'push',
+  /** The browser's own push service, which hands out notification subscriptions. */
+  'browser-push',
 ] as const;
 
 export type AppErrorSource = (typeof APP_ERROR_SOURCES)[number];

@@ -161,7 +161,14 @@ export function createReminderController(env: ReminderEnv): ReminderController {
           set({ status: permission === 'denied' ? 'blocked' : 'off', busy: false });
           return;
         }
-        const subscription = (await env.getSubscription()) ?? (await env.subscribe());
+        const subscription =
+          (await env.getSubscription()) ??
+          (await env.subscribe().catch((cause: unknown) => {
+            // The browser's own push service said no. Our server was never asked, so it is not blamed.
+            throw isAppError(cause)
+              ? cause
+              : new AppError('provider-down', 'browser-push', { cause });
+          }));
         await confirm({ ...settings, timeZone: env.timeZone() }, subscription);
       } catch (error) {
         // Not confirmed, so not on.
