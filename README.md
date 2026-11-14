@@ -116,45 +116,46 @@ The first end-to-end run needs `npx playwright install chromium`. Tests never re
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
   subgraph Browser
+    direction LR
     App["React app"]
-    SW["Service worker"]
-    Shell[("Precache: app shell")]
-    Snap[("Cache Storage: last city's snapshot")]
-    LS[("localStorage: favourites, theme, units")]
+    Snap[("Cache Storage:<br/>last city's snapshot")]
+    SW["Service worker:<br/>app shell, push, notifications"]
+    Shell[("Precache:<br/>app shell")]
+    App -->|"writes after each fetch,<br/>reads when offline"| Snap
+    SW --- Shell
   end
 
-  GeoDB["GeoDB Cities"]
-  Geo["Open-Meteo geocoding"]
-  OWM["OpenWeatherMap"]
-  OM["Open-Meteo"]
+  subgraph APIs["Public APIs"]
+    direction LR
+    GeoDB["GeoDB Cities"]
+    Geo["Open-Meteo geocoding"]
+    OWM["OpenWeatherMap"]
+    OM["Open-Meteo"]
+  end
 
-  App -->|"city search"| GeoDB
-  App -.->|"if GeoDB is rate limited or down"| Geo
-  App -->|"weather, primary"| OWM
-  App -.->|"fallback"| OM
-  App -->|"writes after each fetch, reads when offline"| Snap
-  App --- LS
-  SW --- Shell
-
-  subgraph Reminders["Reminder server on Vercel"]
-    Sub["/api/push/subscribe and /test"]
+  subgraph Reminders["Reminder server"]
+    direction LR
+    Sub["/api/push/subscribe<br/>/api/push/test"]
+    Redis[("Upstash Redis:<br/>subscriptions and schedule")]
     Disp["/api/push/dispatch"]
+    Sub --> Redis
+    Disp -->|"what is due"| Redis
   end
 
-  QStash["QStash schedule, every 5 minutes"]
-  Redis[("Upstash Redis: subscriptions and schedule")]
+  QStash["QStash schedule,<br/>every 5 minutes"]
   Push["Browser push service"]
 
+  App -->|"city search"| GeoDB
+  App -.->|"search backup"| Geo
+  App -->|"weather"| OWM
+  App -.->|"weather fallback"| OM
   App -->|"subscription, time, city"| Sub
-  Sub --> Redis
   QStash -->|"signed request"| Disp
-  Disp -->|"what is due"| Redis
   Disp -->|"today's forecast"| OM
   Disp -->|"Web Push"| Push
   Push -->|"push event"| SW
-  SW -->|"notification"| App
 ```
 
 Source layout, briefly:
