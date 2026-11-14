@@ -35,6 +35,9 @@ Every prompt I gave the agent is listed below in order, verbatim, with a short n
 - Prompt 13 – I asked for a unit test of the notification tap, which had none.
 - Prompt 14 – the footer credit wrapped with a wide gap at 375; I had the two lines brought together.
 - Prompt 14 – I had a fresh agent review the work as the reviewer would, and limited the changes afterwards to unmet requirements and visibly broken details. Three small fixes came out of it; the rest is listed in `docs/AUDIT.md`.
+- Prompt 15 – the agent recommended leaving the first-search speed as it was. I did not accept that and proposed a client-only change: send the first request at the second letter, never cancel it, and fill the list from its page.
+- Prompt 15 – the agent pointed out that this makes small-town searches slower, because of GeoDB's one-request-a-second limit. I accepted the trade and added a condition: measure with real requests whether the early request belongs at the second or the third letter. 11 of 12 cities were in their two-letter page, so it stayed at two.
+- Prompt 15 – search ranking, the placeholder at 768 and the subscribe-failure message, which the agent had recommended leaving.
 
 The other direction, once: in prompt 8 the agent pushed back on my rule for merging search results by distance alone, because it would merge neighbouring cities. Names must be related too.
 
@@ -524,3 +527,41 @@ Step 5 – record and report. Save the reviewer's findings and what was done abo
 *The device line in this prompt still held its placeholder. The agent asked which devices I had used, and I answered: a MacBook with Chrome, and an iPhone with the app installed from Safari.*
 
 **Outcome:** The repo was made public and confirmed to load without signing in. The footer and the device results went in as their own commits. A fresh agent, given only the brief, the live site and a clean clone, found every requirement and bonus working, zero axe violations in 22 scans, and Lighthouse accessibility, best practices and SEO at 100; it marked the 300 ms budget as not met for a first search, which the README already says. Three visible details were fixed and re-checked on the live site: a notice that covered the header, reminder fields cut off in the side column, and a header status that contradicted the offline banner. Everything else is in `docs/AUDIT.md` with a recommendation, unchanged.
+
+## Prompt 15 — First-search speed, ranking and the smaller audit items
+
+```text
+Review decisions on the audit list:
+- Tooling and scope, tab order at 1280, the invalid-coordinates link: no change.
+- 300 ms on a first search: I don't accept "leave it" yet. There's a client-only change worth trying, below.
+- Search ranking, the truncated placeholder at 768, the subscribe-failure copy and a Firefox run: small, do them as described below.
+
+Work on a branch with a Vercel preview. Main stays exactly as submitted until everything here is green; merge only then. If any one item isn't clean within this pass, drop that item, keep the rest and tell me.
+
+1. First-search speed (requirement 01). Today the first request waits for the pause plus the debounce, so results land 600–800 ms after the user stops. Change the request policy so the network starts earlier and the list fills from what we already have:
+- Send the first request as soon as the input reaches 2 characters, without waiting for a pause. Don't abort it when the user keeps typing; let it finish and fill the cache.
+- While the user types on, show the matches for the current text from the cached shorter prefix straight away as real suggestions, and keep the request for the full text (still one per second, latest text wins) to complete the list beneath them without it jumping.
+- Keep everything else: the 2-character minimum, the quota budget (say how many requests a typical search now costs), the 429 path and the backup geocoder.
+- Measure with the existing performance mark on the preview, for a fast typist and a slow one, on Lahore, London, Karachi and one small town. Put before and after in the README list and say plainly where 300 ms is now met and where it still isn't.
+If you see a problem with this design, say so before building.
+
+2. Ranking. Names that start with the typed text rank above names that only match on a later word, with population order kept inside each group. Record a real "Par" response as a fixture: Paris should come first, and the Lahore and London fixtures must keep their order. If the rule doesn't put Paris fir on the real data, tell me and don't add a special case.
+
+3. The search placeholder reads "Search for a cit" at 768 once a city is loaded. Shorten the placeholder so it fits at every width.
+
+4. A browser-side failure to subscribe is described as a bad server reply. Give it its own message that says what failed and what to try.
+
+5. Run the core e2e flows in Firefox on this machine and report the result. Change nothing for it unless something is visibly broken.
+
+Tests for 1 and 2 with fake timers and the recorded fixtures: the early request, no abort on further typing, cached-prefix matches shown at once, the full-text request merging beneath them, spacing and latest-wins unchanged.
+
+When check and e2e are green on the branch and the preview behaves, merge to main, confirm CI, the deploy and the live site, then update the README, docs/AUDIT.md (requirement 01 and the items above) and PROMPTS.md. Report what merged, what was dropped, and the new timings.
+```
+
+*Before building, the agent told me the cost of the design: a small town typed quickly would get slower, a short query would not get faster, and a search would use two requests. It asked how to proceed. My answer, verbatim:*
+
+```text
+Option 1, with one refinement so the prefix length is measured, not assumed.The trade is right. Most searches are for large cities, and that's what a reviewer types first. Getting Lahore on screen by the time a fast typist stops is worth a small-town search taking 300–550 ms longer, as long as we say so plainly.Before building, check the hit rate with real requests (about 24, spaced a second apart). For Lahore, Karachi, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, Quetta, London, Paris, New York and Dubai: is the city in the top 10 for its first two letters, and for its first three? Then:- if at least 10 of the 12 are there on two letters, send the early request at the second letter;- otherwise send it at the third letter, and a pause on two letters still searches as it does today.Record the results in the plan.Keep the penalty as small as the limit allows: the full-text request goes the moment the one-second spacing permits, never later. Don't use the backup geocoder to fill that gap.Measure all four cases on the preview: large city and small town, fast typist and slow. The README states the trade plainly, including the slower case.
+```
+
+**Outcome:** The hit-rate check found 11 of the 12 cities in their two-letter page (Paris is not), so the early request goes at the second letter. Measured on the preview against production: Lahore, London, Karachi and Skardu typed quickly now appear 96–343 ms after the last key, against 738–929 ms, and are already on screen for a slow typist; Murree, outside its two-letter page, got slower, 1.3–1.5 s against 0.7–1.5 s. Paris now leads "Par" by the general rule, the placeholder fits, and a browser-side subscription failure has its own message. Firefox was dropped: Playwright's build does not start on this machine. Merged to main after the checks were green on the branch.
