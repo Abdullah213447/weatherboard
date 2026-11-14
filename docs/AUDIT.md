@@ -73,3 +73,14 @@ axe-core found no violations in 22 scans at 375 and 1280: the empty state, a cit
 - Firefox, real Safari, iOS and Android.
 - `vercel dev` and the schedule script.
 - The update prompt between two deployed versions, and a replaced push subscription.
+
+## Second pass, after my review of this list
+
+I did not accept "leave it" for the first-search speed, and asked for four of the smaller items to be done as well. This was done on a branch with a preview, and merged only when the checks were green.
+
+- **Requirement 01, first-search speed – improved, not fully met.** The first request now goes at the second letter and is never cancelled; matches from its page are shown at once while the full-text request completes the list underneath. Measured on the preview: Lahore, London, Karachi and Skardu typed quickly appear 96–343 ms after the last key (738–929 ms before), and are already on screen for a slow typist. A small town outside its two-letter page (Murree) is slower than before, 1.3–1.5 s against 0.7–1.5 s, because the second request must wait out GeoDB's one-per-second limit. The README gives every figure and says where 300 ms is and is not met.
+- **Search ranking – done.** Names that start with the typed text now rank above later-word matches. On a recorded "Par" response Paris comes first, with no special case. Lahore and London still lead their lists.
+- **Placeholder at 768 – done.** It now reads "Search cities" and fits at every width.
+- **Subscribe-failure message – done.** A subscription refused by the browser now says so and suggests a normal window, without blaming the reminder service.
+- **Firefox – could not be run.** Playwright's Firefox build exits at launch on my machine with "Could not find profile folder", the same failure the reviewer saw. Firefox stays unverified.
+- **No change, by my decision:** tooling and scope, the tab order at 1280, and the invalid-coordinates link.
