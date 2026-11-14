@@ -33,6 +33,8 @@ Every prompt I gave the agent is listed below in order, verbatim, with a short n
 - Prompt 12 – notices could pile up. They now show one at a time, and the install card waits until a first city has loaded.
 - Prompt 12 – I replaced the plan's reminder scheduling (scan each time zone's current slot, 5-minute steps) with a sorted set scored by next fire time, which allows any minute.
 - Prompt 13 – I asked for a unit test of the notification tap, which had none.
+- Prompt 14 – the footer credit wrapped with a wide gap at 375; I had the two lines brought together.
+- Prompt 14 – I had a fresh agent review the work as the reviewer would, and limited the changes afterwards to unmet requirements and visibly broken details. Three small fixes came out of it; the rest is listed in `docs/AUDIT.md`.
 
 The other direction, once: in prompt 8 the agent pushed back on my rule for merging search results by distance alone, because it would merge neighbouring cities. Names must be related too.
 
@@ -494,3 +496,31 @@ Done when the README renders correctly on GitHub (diagram and images included), 
 ```
 
 **Outcome:** The notification tap gained a unit test with stand-in clients. The README, 28 screenshots of the live app and the "How I worked" section were added. The scan of the full history, every tracked file and the local and deployed bundles found no secret value outside the three keys meant to be public, no brief file, and no work email; it did find my local username in a file path in the first commit's version of this log, which I was told about and which was left in place pending my decision. No six-word run from the brief appears in the plan or this log beyond a file name.
+
+## Prompt 14 — Publish, device results, independent review, last fixes
+
+```text
+Decisions:
+- Git history: leave it as it is. The old path shows only my own name, which is public anyway, and a rewrite this close to submission isn't worth the risk.
+- Real-device results from my pass, for the README: on <your devices and browsers, e.g. MacBook – Chrome; iPhone 15 – installed from Safari>, a test notification arrived with the tab closed, tapping it opened the app on the right city, a scheduled reminder arrived within 5 minutes of its time, and the installed app reopened offline on the last city with the "Offline mode" banner. Anything not listed here stays under "not verified on a real device".
+- The footer credit at 375: tidy the wrap so the two lines sit together.
+
+Step 1 – publish. Make the repo public now, confirm the README, images and PROMPTS.md load without signing in, and tell me as soon as that's confirmed, before you continue.
+
+Step 2 – update the README with the device results above, and the footer. Own commits.
+
+Step 3 – independent review. Start a fresh subagent that hasn't seen this session. Give it only the brief PDF, the live URL and a clean clone of the public repo (it may use my keys from .env.local to run it), and ask it to act as the Edspire reviewer:
+- follow the README setup from the clean clone and report any step that doesn't work as written;
+- check each requirement (01–07) and each bonus on the live site with real data at 375, 768 and 1280, and mark it met, partly met or not met, with evidence;
+- look for what a reviewer would notice in ten minutes: generic error copy, an async path without a loading or error state, console errors or warnings, anything under 44px at 375, horizontal scroll, keyboard traps, and visual details that look unfinished next to the brief's design references;
+- run the core flows once in Playwright's WebKit and Firefox and report differences from Chromium;
+- run Lighthouse on the live site (mobile and desktop) and an axe scan on the main states, and report the scores and violations.
+
+Step 4 – act on the review, with a narre only what is (a) a brief requirement not fully met or (b) visibly broken or unfinished on the live site. Each change small, its own commit, CI green and the live site re-checked. Everything else goes into a short list for me with your recommendation, untouched. If a finding needs a risky change, stop and ask. No new features: this is the last pass before I submit.
+
+Step 5 – record and report. Save the reviewer's findings and what was done about each in docs/AUDIT.md, in our own words. Update the README where anything changed, log this prompt, push, and confirm CI, the deploy and the public repo. In your reply, include the "How I worked" section and the list of my changes from PROMPTS.md so I can review them.
+```
+
+*The device line in this prompt still held its placeholder. The agent asked which devices I had used, and I answered: a MacBook with Chrome, and an iPhone with the app installed from Safari.*
+
+**Outcome:** The repo was made public and confirmed to load without signing in. The footer and the device results went in as their own commits. A fresh agent, given only the brief, the live site and a clean clone, found every requirement and bonus working, zero axe violations in 22 scans, and Lighthouse accessibility, best practices and SEO at 100; it marked the 300 ms budget as not met for a first search, which the README already says. Three visible details were fixed and re-checked on the live site: a notice that covered the header, reminder fields cut off in the side column, and a header status that contradicted the offline banner. Everything else is in `docs/AUDIT.md` with a recommendation, unchanged.
