@@ -26,7 +26,11 @@ export function WeatherStatus({ state, now, offline = false }: WeatherStatusProp
   let dot = 'bg-subtle motion-safe:animate-pulse-soft';
   let text = 'Loading weather';
 
-  if (state.status === 'success') {
+  if (state.status === 'success' && offline) {
+    // The snapshot on screen is the saved one; a green "Updated" beside the offline banner would contradict it.
+    dot = 'bg-subtle';
+    text = `Offline · saved ${relativeTime(state.snapshot.fetchedAt, now)}`;
+  } else if (state.status === 'success') {
     const backup = state.snapshot.provider === 'open-meteo';
     dot = backup ? 'bg-warning' : 'bg-success';
     text = `Updated ${relativeTime(state.snapshot.fetchedAt, now)} · ${PROVIDER[state.snapshot.provider]}`;
