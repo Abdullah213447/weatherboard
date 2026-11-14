@@ -243,7 +243,8 @@ export function ReminderCard({ controller, city, favourites, unit, online }: Rem
           </Message>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
+        {/* Side by side on a phone, where the card is full width; stacked in the narrow side column, where "07:30 AM" would be cut off. */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-1">
           <div className="min-w-0">
             <label htmlFor={timeId} className="text-muted mb-1 block text-xs">
               Time
