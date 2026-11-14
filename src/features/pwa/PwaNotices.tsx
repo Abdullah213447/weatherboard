@@ -46,7 +46,7 @@ export function OfflineReadyToast() {
     <div
       role="status"
       data-testid="offline-ready"
-      className="border-line-strong bg-raised text-ink shadow-raised animate-fade-in fixed top-[calc(0.75rem+env(safe-area-inset-top))] left-1/2 z-40 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-sm"
+      className="border-line-strong bg-raised text-ink shadow-raised animate-fade-in fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-30 flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 text-sm"
     >
       <Icon name="success" size={16} className="text-success shrink-0" />
       Ready to use offline
