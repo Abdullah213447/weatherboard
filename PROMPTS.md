@@ -5,6 +5,37 @@
 
 Every prompt I gave the agent is listed below in order, verbatim, with a short note on what came out of it. The only alterations are redactions of secrets pasted into a prompt, marked `[redacted]`, and local file paths shortened to project-relative ones.
 
+## How I worked
+
+- Plan first, with a review gate. Prompt 1 asked for a plan and no code; I answered its open questions in prompt 2 before anything was built.
+- A standing rules file, `CLAUDE.md`, from prompt 3: strict types, a pure domain layer, four states for every async UI, specific error copy, accessibility, real recorded fixtures.
+- One slice per prompt, each with acceptance criteria, tests, and a check on the live site.
+- Each prompt opens with my decisions on the previous output: accepted, or changed and why.
+- Claims measured, not asserted: the 300 ms budget, contrast ratios, layout shift, the precache size, the provider limits.
+- I drafted and reviewed the prompts with a separate Claude chat as a planning partner before sending them to the agent.
+
+## Where I changed the agent's output or proposal
+
+- Prompt 2 – one reminder schedule per user (the plan's first idea) was dropped once I had the agent check the free-tier limits: QStash allows 10 schedules. Redis plus a single trigger replaced it.
+- Prompt 4 – commits were being made under my work email. I had the identity changed to my GitHub noreply address before the first push.
+- Prompt 7 – the sky tints were too faint; I asked for a distinct character per condition, still at AA contrast.
+- Prompt 7 – 44 px targets depended on pointer type alone. A desktop browser resized to 375 would have failed, so the rule became every viewport below 768 px.
+- Prompt 7 – end-to-end tests were added to CI, with browser caching.
+- Prompt 8 – a day was labelled from its midday reading, which gave "Cloudy" with a 100% chance of rain. I replaced it with a severity ranking over the daytime readings.
+- Prompt 8 – a rejected weather key now opens the circuit for the session, where before it was retried on every request.
+- Prompt 9 – the severity rule over-reported light showers (Honolulu). I added a threshold: a 50% chance or 0.5 mm in the reading.
+- Prompt 9 – for the 300 ms budget I asked for a preconnect and for matching recent cities to be shown at once, then for the numbers to be measured again. The preconnect made no measurable difference, and the plan says so.
+- Prompt 10 – a too-light shower could still label a day through the noon reading. That case now uses cloud cover.
+- Prompt 10 – the unit switch was inside a settings menu. I moved it onto the card beside the temperature; the header button became the theme only.
+- Prompt 10 – the card now fades in when data replaces the skeleton, and the search field clears after a selection.
+- Prompt 10 – I asked for every icon to be shown in the preview and reviewed. That showed cloudy and partly cloudy were the same drawing.
+- Prompt 11 – on a phone the folded favourites row needed a tap to reveal the cities. I changed it to show the cities themselves as tap targets, with removal behind "Edit".
+- Prompt 12 – notices could pile up. They now show one at a time, and the install card waits until a first city has loaded.
+- Prompt 12 – I replaced the plan's reminder scheduling (scan each time zone's current slot, 5-minute steps) with a sorted set scored by next fire time, which allows any minute.
+- Prompt 13 – I asked for a unit test of the notification tap, which had none.
+
+The other direction, once: in prompt 8 the agent pushed back on my rule for merging search results by distance alone, because it would merge neighbouring cities. Names must be related too.
+
 ---
 
 ## Prompt 1 — Planning before any code
@@ -419,3 +450,47 @@ Done when `npm run check` and e2e pass. Logical commits (server, schedule script
 ```
 
 **Outcome:** Asked to look for a problem with scheduling as data, the agent found one that had to be designed out rather than a reason not to do it: a time that occurs twice on a fall-back day would fire twice unless the next occurrence is defined per local date. It then built the server (three functions, a sorted-set schedule, claim-before-send), the service worker handlers, and a reminder card that explains itself before the browser prompt and says "on" only when the server confirms. Building the functions locally the way Vercel does, and loading the output in Node, caught two failures that would otherwise have appeared only in production: extensionless imports, and a library with no default export.
+
+*During prompt 12 I interrupted the agent once and sent "continue". No other instruction was given.*
+
+## Prompt 13 — Review changes, then README, prompt log, screenshots and the pre-publication scan
+
+```text
+Review decisions:
+- nextFireAt taking the earliest occurrence on each local date, and the rest of the reminder notes: accepted.
+- Add a unit test for notificationclick with a stand-in for clients (focus and navigate an open window, otherwise open one). pushsubscriptionchange stays untested and goes under known limitations.
+- I'm running the real-device pass now and will give you the results in the next prompt. Until then, nothing may claim real-device verification.
+Commit the test as its own commit.
+
+Then make the repo ready to submit. No app behaviour changes in this prompt.
+
+README.md, written for a reviewer who has five minutes:
+- What it is in two or three sentences, the live URL, and three or four screenshots (phone and desktop, light and dark).
+- "Try it in five minutes": a short guided path through the things worth seeing – search with Lahore and a nonsense word, the unit switch, saving favourites, offline mode, installing, a test reminder with the tab closed, and the backup weather source.
+- Requirement checklist: each brief requirement (01–07) and each bonus, where it lives in the code and which tests cover it.
+- Setup: prerequisites, every environment variable and where to get it, running the app, running the functions locally, running the checks.
+- Architecture: one Mermaid diagram (app, service worker, weather providers with fallback, the saved snapshot, and the reminder path from QStash through the functions and Redis to the push service). Then the decisions that matter, each with its reason, drawn from the plan's Decisions: the provider-independent model, the fallback policy and circuit, how a day gets its condition, GeoDB limits and result cleaning, the typed errors and the copy test, safe storage, who owns the offline snapshot, and the reminder server as the one exception to client-only – why it was needed, how small it is, and how it's protected.
+- The 300 ms requirement: the measured table and what it means, stated plainly.
+- APIs used, with their free-tier limits and the Open-Metribution.
+- Known limitations, honestly: API keys visible in the bundle, GeoDB latency and quotas, reminder timing (within 5 minutes, skipped when over an hour late, desktop browsers must be running), iOS only when installed, the Open-Meteo daily-label difference, Latin-only fonts offline, and exactly what was verified automatically versus on a real device.
+- Testing and CI in a few lines, then what I'd do next with more time.
+- A short note on how it was built, linking PROMPTS.md and docs/PLAN.md.
+Voice: mine, first person, plain and direct. Short sentences, descriptive headings, lists rather than tables (a table only for the requirement checklist), no emojis, no marketing words, en dashes instead of em dashes. Describe work as added, updated or worked on.
+
+PROMPTS.md:
+- Check that every prompt is there verbatim and in order, including the unnumbered lines, with secrets redacted.
+- Header: the tool (Claude Code inside the Cursor IDE) and the model you are running as.
+- Add a short "How I worked" section at the top: plan first with a review gate; a standing rules file; one slice per prompt with acceptance criteria, tests and a check on the live site; each prompt opening with decisions on the previous output; claims measured, not asserted. I drafted and reviewed the prompts with a separate Claude chat as a planning partner before sending them to you; say that in one line.
+- Then a list of the moments where I changed your output or your proposal, with the prompt number and the reason, taken from the actual history. I'll edit this section myself, so keep it factual and short.
+
+Screenshots: capture the real app at 375 and 1280 in both themes into docs/screenshots – a daytime card, a night card, favourites, search suggestions, the offline banner, the reminder card and one error state. Use them in the README.
+
+Before the repo goes public:
+- Scan the full git history, every tracked file and the built bundle for secret values (weather, RapidAPI, Upstash, QStash, the VAPID private key), .env files, the brief (PDF a BRIEF.md), my work email, and local usernames or paths. The bundle should hold only the values meant to be public. Report what you checked and what you found. Don't rewrite history or change visibility without asking me.
+- Check docs/PLAN.md and PROMPTS.md for passages copied from the brief and reword any you find.
+- Set the GitHub repo description and homepage to the live URL.
+
+Done when the README renders correctly on GitHub (diagram and images included), every link works and `npm run check` passes. Separate commits for the README, the prompt log and the screenshots; log this prompt; push; confirm CI and deploy are green.
+```
+
+**Outcome:** The notification tap gained a unit test with stand-in clients. The README, 28 screenshots of the live app and the "How I worked" section were added. The scan of the full history, every tracked file and the local and deployed bundles found no secret value outside the three keys meant to be public, no brief file, and no work email; it did find my local username in a file path in the first commit's version of this log, which I was told about and which was left in place pending my decision. No six-word run from the brief appears in the plan or this log beyond a file name.
