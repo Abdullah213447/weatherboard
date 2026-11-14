@@ -14,8 +14,10 @@ type AppShellProps = {
 
 const container = 'mx-auto w-full max-w-[80rem] px-4 md:px-6';
 
+// Each link keeps a 44px hit area on touch layouts. The negative margin stops that
+// height from stretching the line it sits in, so wrapped lines stay together.
 const linkClass =
-  'text-muted hover:text-ink underline underline-offset-2 inline-flex min-h-11 items-center compact:inline compact:min-h-0';
+  'text-muted hover:text-ink underline underline-offset-2 inline-flex min-h-11 -my-2.5 items-center compact:inline compact:min-h-0 compact:my-0';
 
 /** Page frame: header with slots, a banner row, the main area and the attribution footer. */
 export function AppShell({ search, status, actions, banner, children }: AppShellProps) {
@@ -62,7 +64,7 @@ export function AppShell({ search, status, actions, banner, children }: AppShell
       </main>
 
       <footer className="border-line border-t pb-[env(safe-area-inset-bottom)]">
-        <p className={`${container} text-subtle py-4 text-xs`}>
+        <p className={`${container} text-subtle compact:leading-4 py-4 text-xs leading-6`}>
           Weather data by{' '}
           <a className={linkClass} href="https://open-meteo.com/" target="_blank" rel="noreferrer">
             Open-Meteo
