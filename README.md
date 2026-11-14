@@ -94,7 +94,7 @@ set -a; source .env.local; set +a
 vercel dev
 ```
 
-`vercel dev` serves the app and the three functions under `/api/push` together. It did not pick the server variables up from `.env.local` by itself when I tried it, which is why the first line exports them.
+This needs a Vercel account and a linked project: run `vercel link` once first. `vercel dev` then serves the app and the three functions under `/api/push` together. It did not pick the server variables up from `.env.local` by itself when I tried it, which is why the first line exports them.
 
 To create or update the schedule that triggers the reminder sender:
 
@@ -230,7 +230,7 @@ Attribution: weather data by [Open-Meteo](https://open-meteo.com/), licensed und
 
 Verified automatically, on every push:
 
-- 837 unit and component tests, against recorded real API responses.
+- 839 unit and component tests, against recorded real API responses.
 - Playwright tests in Chromium at 375 px (touch and mouse), 768 px and 1280 px: layout, touch targets, search, weather, favourites, offline flows, installability through the DevTools protocol, and the reminder card's flows with the server answered by the test.
 
 Verified by me against the live site, in desktop Chromium:
@@ -249,7 +249,7 @@ Verified by me on real devices – a MacBook in Chrome, and an iPhone with the a
 Not verified on a real device:
 
 - Android phones, tablets, and any other desktop browser.
-- Safari and Firefox on a desktop.
+- Safari and Firefox. The core flows passed once in Playwright's WebKit build, which is not Safari; Firefox was not run.
 - The update prompt between two real deployed versions.
 - A replaced push subscription (`pushsubscriptionchange`).
 - Anything else not listed above. The phone-sized automated tests ran in desktop Chromium, not on a phone.
@@ -276,6 +276,7 @@ I worked with Claude Code inside the Cursor IDE. I started with a plan and revie
 
 - [PROMPTS.md](PROMPTS.md) – every prompt, in order and verbatim, with what came out of it and where I changed the agent's output.
 - [docs/PLAN.md](docs/PLAN.md) – the plan, the risks, and every decision with its reason.
+- [docs/AUDIT.md](docs/AUDIT.md) – an independent review I ran before submitting, and what I did about each finding.
 
 ## More screenshots
 
