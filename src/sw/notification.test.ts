@@ -1,4 +1,10 @@
-import { FALLBACK, readPayload, toNotification } from './notification';
+import {
+  FALLBACK,
+  openFromNotification,
+  readPayload,
+  toNotification,
+  type WindowClients,
+} from './notification';
 
 describe('toNotification', () => {
   const payload = {
@@ -89,5 +95,79 @@ describe('readPayload', () => {
 
     expect(toNotification(readPayload(unreadable))).toEqual(FALLBACK);
     expect(toNotification(readPayload(null))).toEqual(FALLBACK);
+  });
+});
+
+describe('openFromNotification', () => {
+  const ORIGIN = 'https://weatherboard.example';
+  const URL_TO_OPEN = '/?city=Karachi~~PK~24.8607~67.0011';
+
+  function windowAt(url: string, navigate: () => Promise<unknown> = () => Promise.resolve(null)) {
+    return { url, focus: vi.fn(() => Promise.resolve(null)), navigate: vi.fn(navigate) };
+  }
+
+  function clientsWith(windows: ReturnType<typeof windowAt>[]) {
+    return {
+      matchAll: vi.fn<WindowClients['matchAll']>(() => Promise.resolve(windows)),
+      openWindow: vi.fn<WindowClients['openWindow']>(() => Promise.resolve(null)),
+    };
+  }
+
+  it('focuses a window that is already open and takes it to the city', async () => {
+    const open = windowAt(`${ORIGIN}/?city=Lahore~Punjab~PK~31.5497~74.3436`);
+    const clients = clientsWith([open]);
+
+    await openFromNotification(clients, ORIGIN, URL_TO_OPEN);
+
+    expect(open.focus).toHaveBeenCalledOnce();
+    expect(open.navigate).toHaveBeenCalledWith(URL_TO_OPEN);
+    expect(clients.openWindow).not.toHaveBeenCalled();
+  });
+
+  it('looks at every window of the site, including ones the worker does not control yet', async () => {
+    const clients = clientsWith([]);
+
+    await openFromNotification(clients, ORIGIN, URL_TO_OPEN);
+
+    expect(clients.matchAll).toHaveBeenCalledWith({ type: 'window', includeUncontrolled: true });
+  });
+
+  it('opens a new window when none is open', async () => {
+    const clients = clientsWith([]);
+
+    await openFromNotification(clients, ORIGIN, URL_TO_OPEN);
+
+    expect(clients.openWindow).toHaveBeenCalledWith(URL_TO_OPEN);
+  });
+
+  it('ignores a window that belongs to another site', async () => {
+    const other = windowAt('https://elsewhere.example/');
+    const clients = clientsWith([other]);
+
+    await openFromNotification(clients, ORIGIN, URL_TO_OPEN);
+
+    expect(other.focus).not.toHaveBeenCalled();
+    expect(clients.openWindow).toHaveBeenCalledWith(URL_TO_OPEN);
+  });
+
+  it('uses the first matching window when several are open', async () => {
+    const first = windowAt(`${ORIGIN}/`);
+    const second = windowAt(`${ORIGIN}/?preview=ui`);
+    const clients = clientsWith([first, second]);
+
+    await openFromNotification(clients, ORIGIN, URL_TO_OPEN);
+
+    expect(first.focus).toHaveBeenCalledOnce();
+    expect(second.focus).not.toHaveBeenCalled();
+  });
+
+  it('keeps the window focused, without opening a second one, when it refuses to navigate', async () => {
+    const open = windowAt(`${ORIGIN}/`, () => Promise.reject(new TypeError('cannot navigate')));
+    const clients = clientsWith([open]);
+
+    await expect(openFromNotification(clients, ORIGIN, URL_TO_OPEN)).resolves.toBeUndefined();
+
+    expect(open.focus).toHaveBeenCalledOnce();
+    expect(clients.openWindow).not.toHaveBeenCalled();
   });
 });

@@ -75,3 +75,35 @@ export function readPayload(data: { json(): unknown } | null | undefined): unkno
 /** Where the app keeps the reminder's settings for the worker to read. */
 export const REMINDER_CACHE = 'wb-reminder-v1';
 export const REMINDER_SETTINGS_URL = '/__reminder/settings.json';
+
+/** The parts of the worker's `clients` that a notification tap uses. */
+export type WindowClients = {
+  matchAll(options: { type: 'window'; includeUncontrolled: true }): Promise<
+    readonly {
+      url: string;
+      focus(): Promise<unknown>;
+      navigate(url: string): Promise<unknown>;
+    }[]
+  >;
+  openWindow(url: string): Promise<unknown>;
+};
+
+/**
+ * A tap on a notification: bring WeatherBoard forward on that city, reusing a
+ * window that is already open rather than opening a second one. A window that
+ * refuses to navigate is still focused; that is better than a duplicate.
+ */
+export async function openFromNotification(
+  clients: WindowClients,
+  origin: string,
+  url: string,
+): Promise<void> {
+  const windows = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const open = windows.find((client) => new URL(client.url).origin === origin);
+  if (open) {
+    await open.focus();
+    await open.navigate(url).catch(() => undefined);
+    return;
+  }
+  await clients.openWindow(url);
+}

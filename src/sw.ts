@@ -14,6 +14,7 @@ import {
 } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import {
+  openFromNotification,
   readPayload,
   REMINDER_CACHE,
   REMINDER_SETTINGS_URL,
@@ -65,18 +66,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = (event.notification.data as { url?: string } | null)?.url ?? '/';
-  event.waitUntil(
-    (async () => {
-      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      const open = windows.find((client) => new URL(client.url).origin === self.location.origin);
-      if (open) {
-        await open.focus();
-        await open.navigate(url).catch(() => undefined);
-        return;
-      }
-      await self.clients.openWindow(url);
-    })(),
-  );
+  event.waitUntil(openFromNotification(self.clients, self.location.origin, url));
 });
 
 // The browser has replaced the subscription (push services rotate them). Take
